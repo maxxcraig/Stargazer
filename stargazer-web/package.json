@@ -1,0 +1,9 @@
+{
+  "name": "stargazer-web",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@types/three": "^0.178.1",
+    "three": "^0.179.1"
+  }
+}
