@@ -9,7 +9,7 @@ interface AboutPageProps {
 export const AboutPage: React.FC<AboutPageProps> = ({ 
   onNavigateHome, 
   onLogout,
-  githubUrl = "https://github.com/maxcraig/stargazer" 
+  githubUrl = "https://github.com/maxxcraig/Stargazer" 
 }) => {
   return (
     <div style={styles.container}>

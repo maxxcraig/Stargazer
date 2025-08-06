@@ -130,7 +130,7 @@ function AppContent() {
             onNavigateToAbout={navigateToAbout}
             onNavigateToNASA={navigateToNASA}
             onLogout={handleLogout}
-            githubUrl="https://github.com/maxcraig/stargazer"
+            githubUrl="https://github.com/maxxcraig/Stargazer"
           />
         );
       
@@ -139,7 +139,7 @@ function AppContent() {
           <AboutPage
             onNavigateHome={navigateToHome}
             onLogout={handleLogout}
-            githubUrl="https://github.com/maxcraig/stargazer"
+            githubUrl="https://github.com/maxxcraig/Stargazer"
           />
         );
       

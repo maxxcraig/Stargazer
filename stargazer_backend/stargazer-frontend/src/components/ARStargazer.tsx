@@ -276,10 +276,15 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       // Create planets and sun
       console.log('🪐 Creating planets and sun...');
       const planets = starCatalogRef.current.getPlanets();
+      console.log(`📊 Total planets in catalog: ${planets.length}`);
       planets.forEach((planet, index) => {
+        console.log(`🔍 Processing planet: ${planet.name} (${planet.id})`);
         // Skip Earth since we're observing from Earth
         if (planet.id !== 'earth') {
+          console.log(`➡️ Creating ${planet.name}...`);
           createPlanetObject(planet, currentLocation, index);
+        } else {
+          console.log(`⏭️ Skipping Earth (we're observing from Earth)`);
         }
       });
 
@@ -291,6 +296,28 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       setStarCount(allStars.length);
       setConstellationCount(constellations.length);
       setPlanetCount(planets.length);
+      
+      // Final debug check
+      console.log(`📊 FINAL COUNTS:`);
+      console.log(`   - Stars: ${allStars.length} (${starObjectsRef.current.size} in scene)`);
+      console.log(`   - Planets: ${planets.length} total (${planetObjectsRef.current.size} in scene)`);
+      console.log(`   - Constellations: ${constellations.length}`);
+      
+      // List all planets that were processed
+      const processedPlanets = Array.from(planetObjectsRef.current.keys());
+      console.log(`🚀 Planets in scene: ${processedPlanets.join(', ')}`);
+      
+      // Give user-friendly summary for full sphere
+      if (processedPlanets.length > 0) {
+        console.log(`🌌 ALL PLANETS RENDERED: Drag around to find ${processedPlanets.map(id => {
+          const planet = starCatalogRef.current?.getPlanet(id);
+          return planet?.commonName || id;
+        }).join(', ')}!`);
+        console.log(`🌍 TIP: At night, drag DOWN to see the Sun through the Earth!`);
+      } else {
+        console.log(`❓ No planets rendered - check console for errors`);
+      }
+      
       console.log(`Created ${allStars.length} stars, ${planets.length} planets, and ${constellations.length} constellations in simplified layout`);
 
     } catch (err) {
@@ -580,18 +607,28 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
    * Create a planet or sun object with accurate positioning
    */
   const createPlanetObject = useCallback((planet: Planet, location: GeolocationCoords, index: number) => {
-    if (!sceneRef.current || !starCatalogRef.current) return;
+    if (!sceneRef.current || !starCatalogRef.current) {
+      console.log(`❌ ${planet.name}: Missing scene or catalog reference`);
+      return;
+    }
+
+    console.log(`🚀 CREATING PLANET: ${planet.name} (${planet.id}) - Type: ${planet.type}, Color: ${planet.color.toString(16)}, Radius: ${planet.radius}`);
 
     try {
       // Calculate current position of the planet
-      const planetPosition = starCatalogRef.current.calculatePlanetPosition(planet);
-      const horizontal = starCatalogRef.current.celestialToHorizontal(planetPosition, location);
+      const currentTime = new Date();
+      console.log(`📐 Calculating position for ${planet.name} at ${currentTime.toLocaleString()}...`);
+      const planetPosition = starCatalogRef.current.calculatePlanetPosition(planet, currentTime);
+      console.log(`📍 ${planet.name} celestial coordinates: RA ${planetPosition.ra.toFixed(2)}°, Dec ${planetPosition.dec.toFixed(2)}°`);
+      
+      const horizontal = starCatalogRef.current.celestialToHorizontal(planetPosition, location, currentTime);
+      console.log(`🧭 ${planet.name} horizontal coordinates: Az ${horizontal.azimuth.toFixed(1)}°, Alt ${horizontal.altitude.toFixed(1)}°`);
 
-      // Only render if not too far below horizon (relaxed for demo)
-      if (horizontal.altitude < -20) {
-        console.log(`🪐 ${planet.name} is far below horizon (alt: ${horizontal.altitude.toFixed(1)}°) - skipping`);
-        return;
-      }
+      // Real astronomical positioning - show ALL planets in full 360° celestial sphere
+      // No horizon filtering! Users can drag to see Sun below horizon at night
+      console.log(`🌍 ${planet.name} positioned in full sky sphere (alt: ${horizontal.altitude.toFixed(1)}°) - ${horizontal.altitude < 0 ? 'below horizon (drag down to see)' : 'above horizon'}`);
+      
+      // Always render all planets for full 360° experience
 
       // Convert horizontal coordinates to 3D position
       const distance = 150; // Distance for sky dome
@@ -614,13 +651,26 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       planetMesh.position.set(x, y, z);
       planetMesh.userData = { planet, type: 'planet' };
 
-      // Add subtle glow only for the sun
+      // Add bright glow for the sun and Jupiter
       if (planet.type === 'sun') {
-        const glowGeometry = new THREE.SphereGeometry(planet.radius * 1.5, 12, 8);
+        const glowGeometry = new THREE.SphereGeometry(planet.radius * 2.0, 12, 8);
         const glowMaterial = new THREE.MeshBasicMaterial({
           color: 0xFFD700,
           transparent: true,
-          opacity: 0.2
+          opacity: 0.4 // Brighter glow for Sun
+        });
+        const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+        glowMesh.position.copy(planetMesh.position);
+        sceneRef.current.add(glowMesh);
+      }
+
+      // Add glow for Jupiter to make it more visible
+      if (planet.id === 'jupiter') {
+        const glowGeometry = new THREE.SphereGeometry(planet.radius * 1.3, 12, 8);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+          color: 0x800080,
+          transparent: true,
+          opacity: 0.3
         });
         const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
         glowMesh.position.copy(planetMesh.position);
@@ -643,10 +693,21 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         sceneRef.current.add(ringMesh);
       }
 
+      console.log(`🎨 Creating 3D mesh for ${planet.name} with geometry radius ${planet.radius} and color 0x${planet.color.toString(16)}`);
+      
       sceneRef.current.add(planetMesh);
       planetObjectsRef.current.set(planet.id, planetMesh);
+      
+      console.log(`✅ ${planet.name} mesh added to scene at position (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)})`);
+      console.log(`📋 Planet objects map now contains ${planetObjectsRef.current.size} planets`);
 
-      console.log(`🪐 ADDED ${planet.name} at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}) - Az: ${horizontal.azimuth.toFixed(1)}° Alt: ${horizontal.altitude.toFixed(1)}°`);
+      // Special logging for Sun, Jupiter, Mercury
+      const isImportantPlanet = planet.id === 'sun' || planet.id === 'jupiter' || planet.id === 'mercury';
+      if (isImportantPlanet) {
+        console.log(`🌟 IMPORTANT: ${planet.name.toUpperCase()} RENDERED at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}) - Az: ${horizontal.azimuth.toFixed(1)}° Alt: ${horizontal.altitude.toFixed(1)}° - Look for ${planet.commonName}!`);
+      } else {
+        console.log(`🪐 ADDED ${planet.name} at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}) - Az: ${horizontal.azimuth.toFixed(1)}° Alt: ${horizontal.altitude.toFixed(1)}°`);
+      }
 
       // Create label for planet
       createPlanetLabel(planet, planetMesh.position);
@@ -706,9 +767,23 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     sprite.position.copy(position);
     sprite.position.add(labelOffset);
     
-    // Larger offset for Uranus to avoid overlap
-    const rightOffset = planet.id === 'uranus' ? 25 : 12;
-    const upOffset = planet.id === 'uranus' ? 15 : 8;
+    // Planet-specific offsets to avoid overlap with the planet itself
+    let rightOffset = 12;
+    let upOffset = 8;
+    
+    if (planet.id === 'jupiter') {
+      rightOffset = 20; // Larger offset for Jupiter due to its size and glow
+      upOffset = 15;
+    } else if (planet.id === 'sun') {
+      rightOffset = 25; // Even larger offset for the Sun due to its large size and glow
+      upOffset = 20;
+    } else if (planet.id === 'saturn') {
+      rightOffset = 30; // Account for Saturn's rings
+      upOffset = 12;
+    } else if (planet.id === 'uranus') {
+      rightOffset = 25;
+      upOffset = 15;
+    }
     
     sprite.position.x += rightOffset; // Additional offset to the right
     sprite.position.y += upOffset;    // Additional offset up
@@ -1052,14 +1127,14 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       <div style={styles.instructionsPanel}>
         <p style={styles.instructionsText}>
           {isDesktopMode 
-            ? "Drag to look around the sky • Full 360° movement"
-            : "Point your device at the sky and move to explore stars, planets and constellations"
+            ? "Drag to explore the full celestial sphere • 360° in all directions"
+            : "Point your device anywhere and move to explore stars, planets and constellations"
           }
         </p>
         <p style={styles.instructionsSubtext}>
           {isDesktopMode 
-            ? "Click on stars and planets for more information • SkyView Lite mode"
-            : "Tap on stars and planets for more information"
+            ? "Drag DOWN to see the Sun at night through Earth • Click objects for info"
+            : "Look through the Earth to see objects on the other side • Tap for info"
           }
         </p>
       </div>

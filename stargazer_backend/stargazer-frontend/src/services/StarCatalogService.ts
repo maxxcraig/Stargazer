@@ -735,8 +735,8 @@ export class StarCatalogService {
         name: "Mercury",
         commonName: "Mercury",
         type: "planet" as const,
-        color: 0xFF0000, // Red
-        radius: 2.0,
+        color: 0xFFA500, // Orange for better visibility
+        radius: 2.5, // Slightly larger for visibility
         orbitalElements: {
           semiMajorAxis: 0.38709927,
           eccentricity: 0.20563593,

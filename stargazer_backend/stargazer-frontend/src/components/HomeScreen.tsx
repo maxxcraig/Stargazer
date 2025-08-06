@@ -15,7 +15,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToAbout, 
   onNavigateToNASA,
   onLogout,
-  githubUrl = "https://github.com/maxcraig/stargazer" // Default URL, can be overridden
+  githubUrl = "https://github.com/maxxcraig/Stargazer" // Default URL, can be overridden
 }) => {
   return (
     <div style={styles.container}>
