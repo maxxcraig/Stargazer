@@ -562,7 +562,14 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
    * Update star field based on location and time - SIMPLIFIED VERSION
    */
   const updateStarField = useCallback((currentLocation: GeolocationCoords) => {
-    if (!starCatalogRef.current || !sceneRef.current) return;
+    console.log('🚀 updateStarField called with location:', currentLocation);
+    console.log('🔍 starCatalogRef.current:', !!starCatalogRef.current);
+    console.log('🔍 sceneRef.current:', !!sceneRef.current);
+    
+    if (!starCatalogRef.current || !sceneRef.current) {
+      console.error('❌ Missing refs - starCatalog:', !!starCatalogRef.current, 'scene:', !!sceneRef.current);
+      return;
+    }
 
     try {
       // Clear existing stars, planets and constellation lines
@@ -591,6 +598,10 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       constellationLabelsRef.current.clear();
 
       // Get all stars from catalog - simplified approach
+      console.log('🔍 Attempting to access star catalog...');
+      console.log('🔍 starCatalogRef.current type:', typeof starCatalogRef.current);
+      console.log('🔍 starCatalogRef.current keys:', Object.keys(starCatalogRef.current || {}));
+      
       const allStars = Array.from(starCatalogRef.current['stars'].values());
       console.log(`Total stars in catalog: ${allStars.length}`);
       
