@@ -1417,7 +1417,7 @@ const styles = {
     display: 'block',
     backgroundColor: '#000', // Fallback background
     border: '3px solid red', // Debug border
-    visibility: 'visible',
+    visibility: 'visible' as const,
     opacity: 1,
   },
   threeContainer: {
