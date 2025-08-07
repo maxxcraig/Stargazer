@@ -478,7 +478,8 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     camera.position.set(0, 0, 0);
     camera.lookAt(0, 0, -1); // Look towards negative Z (where some stars are)
     cameraRef.current = camera;
-    console.log('📷 Camera positioned at (0,0,0) looking at (0,0,-1)');
+    console.log('📷 Camera created and positioned at (0,0,0) looking at (0,0,-1)');
+    console.log('🎯 Camera ref set:', !!cameraRef.current);
 
     // Renderer with transparency for AR overlay
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -594,9 +595,12 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       console.log(`Total stars in catalog: ${allStars.length}`);
       
       // Create simplified star placement - just put them around us in a sphere
+      console.log(`🌟 Creating ${allStars.length} stars...`);
       allStars.forEach((star, index) => {
+        console.log(`🔧 Creating star ${index + 1}/${allStars.length}: ${star.name}`);
         createSimplifiedStarObject(star, index);
       });
+      console.log(`✅ Finished creating ${allStars.length} stars`);
 
       // Create planets and sun
       console.log('🪐 Creating planets and sun...');
@@ -1205,6 +1209,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     setLastMousePos(pos);
     setMouseDownPos(pos);
     console.log('🟢 MOUSE DOWN - Started at:', event.clientX, event.clientY);
+    console.log('🎯 Camera ref available for dragging:', !!cameraRef.current);
   }, []);
 
   /**
@@ -1216,7 +1221,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     }
     
     if (!cameraRef.current) {
-      console.log('❌ Camera ref not available');
+      console.log('❌ Camera ref not available - camera may not be initialized yet');
       return;
     }
 
