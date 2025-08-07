@@ -237,103 +237,111 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       console.log('🔗 Connecting stream to video element...');
       
       // Check for existing srcObject before assignment (cleanup)
-      if (videoRef.current.srcObject) {
+      if (videoRef.current && videoRef.current.srcObject) {
         console.log('🧹 Cleaning up existing stream');
         const existingStream = videoRef.current.srcObject as MediaStream;
         existingStream.getTracks().forEach(track => track.stop());
         videoRef.current.srcObject = null;
       }
       
-      videoRef.current.srcObject = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
       
       // Additional debugging for Netlify deployment
       console.log('📦 Stream assignment complete. Video element state:', {
-        srcObject: !!videoRef.current.srcObject,
-        readyState: videoRef.current.readyState,
-        networkState: videoRef.current.networkState,
-        videoWidth: videoRef.current.videoWidth,
-        videoHeight: videoRef.current.videoHeight
+        srcObject: !!videoRef.current?.srcObject,
+        readyState: videoRef.current?.readyState,
+        networkState: videoRef.current?.networkState,
+        videoWidth: videoRef.current?.videoWidth,
+        videoHeight: videoRef.current?.videoHeight
       });
       
       // Add comprehensive event listeners
-      videoRef.current.onloadstart = () => {
-        console.log('📺 Video loadstart event');
-      };
-      
-      videoRef.current.onloadeddata = () => {
-        console.log('📺 Video loadeddata event');
-      };
-      
-      videoRef.current.onloadedmetadata = () => {
-        console.log('✅ Video metadata loaded', {
-          videoWidth: videoRef.current?.videoWidth,
-          videoHeight: videoRef.current?.videoHeight,
-          readyState: videoRef.current?.readyState,
-          duration: videoRef.current?.duration,
-          paused: videoRef.current?.paused
-        });
-        setCameraStatus('active');
-      };
-      
-      videoRef.current.oncanplay = () => {
-        console.log('✅ Video can play - ready state:', videoRef.current?.readyState);
-      };
-      
-      videoRef.current.onplay = () => {
-        console.log('✅ Video started playing');
-        setCameraStatus('active');
-      };
-      
-      videoRef.current.onplaying = () => {
-        console.log('✅ Video is actively playing');
-      };
+      if (videoRef.current) {
+        videoRef.current.onloadstart = () => {
+          console.log('📺 Video loadstart event');
+        };
+        
+        videoRef.current.onloadeddata = () => {
+          console.log('📺 Video loadeddata event');
+        };
+        
+        videoRef.current.onloadedmetadata = () => {
+          console.log('✅ Video metadata loaded', {
+            videoWidth: videoRef.current?.videoWidth,
+            videoHeight: videoRef.current?.videoHeight,
+            readyState: videoRef.current?.readyState,
+            duration: videoRef.current?.duration,
+            paused: videoRef.current?.paused
+          });
+          setCameraStatus('active');
+        };
+        
+        videoRef.current.oncanplay = () => {
+          console.log('✅ Video can play - ready state:', videoRef.current?.readyState);
+        };
+        
+        videoRef.current.onplay = () => {
+          console.log('✅ Video started playing');
+          setCameraStatus('active');
+        };
+        
+        videoRef.current.onplaying = () => {
+          console.log('✅ Video is actively playing');
+        };
 
-      videoRef.current.onerror = (e) => {
-        console.error('❌ Video element error:', e);
-        console.error('❌ Video error details:', videoRef.current?.error);
-        setCameraStatus('failed');
-      };
-      
-      videoRef.current.onstalled = () => {
-        console.warn('⚠️ Video stalled');
-      };
-      
-      videoRef.current.onwaiting = () => {
-        console.warn('⚠️ Video waiting');
-      };
-      
-      // Ensure video is visible
-      if (videoRef.current.style) {
-        videoRef.current.style.visibility = 'visible';
-        videoRef.current.style.opacity = '1';
+        videoRef.current.onerror = (e) => {
+          console.error('❌ Video element error:', e);
+          console.error('❌ Video error details:', videoRef.current?.error);
+          setCameraStatus('failed');
+        };
+        
+        videoRef.current.onstalled = () => {
+          console.warn('⚠️ Video stalled');
+        };
+        
+        videoRef.current.onwaiting = () => {
+          console.warn('⚠️ Video waiting');
+        };
+        
+        // Ensure video is visible
+        if (videoRef.current.style) {
+          videoRef.current.style.visibility = 'visible';
+          videoRef.current.style.opacity = '1';
+        }
       }
       
       console.log('▶️ Attempting to play video...');
-      try {
-        const playPromise = videoRef.current.play();
-        if (playPromise !== undefined) {
-          await playPromise;
-          console.log('✅ Video play promise resolved');
-        }
-      } catch (playError) {
-        console.error('❌ Video play failed:', playError);
-        
-        // Try alternative play approaches
-        console.log('🔄 Trying alternative play methods...');
-        
-        // Method 1: Set autoplay and reload
-        videoRef.current.autoplay = true;
-        videoRef.current.muted = true;
-        videoRef.current.playsInline = true;
-        
-        // Method 2: Direct play call
-        setTimeout(() => {
-          if (videoRef.current) {
-            videoRef.current.play().catch(e => {
-              console.error('❌ Delayed play also failed:', e);
-            });
+      if (videoRef.current) {
+        try {
+          const playPromise = videoRef.current.play();
+          if (playPromise !== undefined) {
+            await playPromise;
+            console.log('✅ Video play promise resolved');
           }
-        }, 100);
+        } catch (playError) {
+          console.error('❌ Video play failed:', playError);
+          
+          // Try alternative play approaches
+          console.log('🔄 Trying alternative play methods...');
+          
+          if (videoRef.current) {
+            // Method 1: Set autoplay and reload
+            videoRef.current.autoplay = true;
+            videoRef.current.muted = true;
+            videoRef.current.playsInline = true;
+            
+            // Method 2: Direct play call
+            setTimeout(() => {
+              if (videoRef.current) {
+                videoRef.current.play().catch(e => {
+                  console.error('❌ Delayed play also failed:', e);
+                });
+              }
+            }, 100);
+          }
+        }
       }
       
       // Only set streamRef if we successfully connected to video element
