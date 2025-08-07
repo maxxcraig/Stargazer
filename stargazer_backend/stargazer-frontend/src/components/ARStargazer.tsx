@@ -184,13 +184,10 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         console.warn('⚠️ Video waiting');
       };
       
-      // Force video to be visible for debugging
+      // Ensure video is visible
       if (videoRef.current.style) {
         videoRef.current.style.visibility = 'visible';
         videoRef.current.style.opacity = '1';
-        videoRef.current.style.zIndex = '10';
-        videoRef.current.style.border = '2px solid red'; // Debug border
-        console.log('🎨 Set debug styles on video element');
       }
       
       console.log('▶️ Attempting to play video...');
@@ -1292,10 +1289,11 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
             </span>
           )}
         </div>
-        <div style={styles.infoRow}>
-          <span>Camera: {cameraStatus} | Stream: {streamRef.current ? 'Active' : 'None'}</span>
-          <span>Video: {videoRef.current?.readyState || 'N/A'} | Playing: {videoRef.current?.paused === false ? 'Yes' : 'No'}</span>
-        </div>
+        {cameraStatus !== 'active' && (
+          <div style={styles.infoRow}>
+            <span>Camera: {cameraStatus}</span>
+          </div>
+        )}
         {location && (
           <div style={styles.infoSubtext}>
             Your coordinates: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
@@ -1341,59 +1339,6 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         )}
       </div>
 
-      {/* Debug Camera Controls */}
-      {cameraStatus !== 'active' && (
-        <div style={{
-          position: 'absolute' as const,
-          bottom: '120px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 20,
-          background: 'rgba(255, 255, 255, 0.1)',
-          padding: '15px',
-          borderRadius: '10px',
-          border: '1px solid #fff',
-        }}>
-          <button
-            onClick={initializeCamera}
-            style={{
-              background: '#ff6b6b',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              marginRight: '10px'
-            }}
-          >
-            Retry Camera
-          </button>
-          <button
-            onClick={() => {
-              if (videoRef.current) {
-                console.log('🔍 Manual video test - current state:', {
-                  srcObject: !!videoRef.current.srcObject,
-                  readyState: videoRef.current.readyState,
-                  paused: videoRef.current.paused,
-                  muted: videoRef.current.muted,
-                  autoplay: videoRef.current.autoplay
-                });
-                videoRef.current.play().catch(console.error);
-              }
-            }}
-            style={{
-              background: '#4CAF50',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
-          >
-            Test Video Play
-          </button>
-        </div>
-      )}
     </div>
   );
 };
@@ -1413,12 +1358,9 @@ const styles = {
     width: '100%',
     height: '100%',
     objectFit: 'cover' as const,
-    zIndex: 10, // Put video on top for debugging
+    zIndex: 1, // Video in back as AR background
     display: 'block',
     backgroundColor: '#000', // Fallback background
-    border: '3px solid red', // Debug border
-    visibility: 'visible' as const,
-    opacity: 1,
   },
   threeContainer: {
     position: 'absolute' as const,
@@ -1426,7 +1368,7 @@ const styles = {
     left: 0,
     width: '100%',
     height: '100%',
-    zIndex: 2,
+    zIndex: 2, // Three.js stars on top of video
     pointerEvents: 'auto' as const,
     // Make Three.js transparent so video shows through
     background: 'transparent',

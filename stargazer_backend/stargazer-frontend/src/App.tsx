@@ -12,20 +12,10 @@ function AppContent() {
   const [selectedStar, setSelectedStar] = useState<Star | null>(null);
   const [selectedPlanet, setSelectedPlanet] = useState<Planet | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Initialize currentPage from URL hash or localStorage, fallback to 'home'
+  // Initialize currentPage - but only restore if user is authenticated
   const initializePage = (): 'home' | 'stargazer' | 'about' | 'nasa' => {
-    // Check URL hash first (e.g., #stargazer)
-    const hash = window.location.hash.slice(1) as 'home' | 'stargazer' | 'about' | 'nasa';
-    if (['home', 'stargazer', 'about', 'nasa'].includes(hash)) {
-      return hash;
-    }
-    
-    // Fallback to localStorage
-    const saved = localStorage.getItem('stargazer-current-page') as 'home' | 'stargazer' | 'about' | 'nasa';
-    if (['home', 'stargazer', 'about', 'nasa'].includes(saved)) {
-      return saved;
-    }
-    
+    // Always start with 'home' during initial load - user auth state isn't known yet
+    // We'll restore the saved page after authentication check
     return 'home';
   };
 
@@ -33,6 +23,25 @@ function AppContent() {
   const [stargazerKey, setStargazerKey] = useState(0);
   
   const { user, loading, signOut } = useAuth();
+
+  // Restore saved page after user authentication is confirmed
+  useEffect(() => {
+    if (!loading && user) {
+      // Only restore saved page for authenticated users
+      const hash = window.location.hash.slice(1) as 'home' | 'stargazer' | 'about' | 'nasa';
+      if (['home', 'stargazer', 'about', 'nasa'].includes(hash)) {
+        console.log('📍 Restoring page from URL hash:', hash);
+        setCurrentPage(hash);
+        return;
+      }
+      
+      const saved = localStorage.getItem('stargazer-current-page') as 'home' | 'stargazer' | 'about' | 'nasa';
+      if (['home', 'stargazer', 'about', 'nasa'].includes(saved)) {
+        console.log('📍 Restoring page from localStorage:', saved);
+        setCurrentPage(saved);
+      }
+    }
+  }, [loading, user]);
 
   // Add/remove stargazer-mode class based on current page and persist state
   useEffect(() => {
