@@ -57,6 +57,26 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       setCameraStatus('requesting');
       console.log('🎥 === CAMERA INITIALIZATION STARTED ===');
       
+      // Comprehensive environment diagnostics
+      console.log('🌍 === ENVIRONMENT DIAGNOSTICS ===');
+      console.log('📍 Location:', window.location.href);
+      console.log('🔒 Protocol:', window.location.protocol);
+      console.log('🌐 User Agent:', navigator.userAgent);
+      console.log('📱 Platform:', navigator.platform);
+      console.log('🎬 MediaDevices available:', !!navigator.mediaDevices);
+      console.log('🎥 getUserMedia available:', !!navigator.mediaDevices?.getUserMedia);
+      console.log('📋 Permissions API available:', !!navigator.permissions);
+      
+      // Check current permissions
+      if (navigator.permissions) {
+        try {
+          const cameraPermission = await navigator.permissions.query({ name: 'camera' as PermissionName });
+          console.log('🔐 Current camera permission:', cameraPermission.state);
+        } catch (permError) {
+          console.log('⚠️ Could not query camera permission:', permError);
+        }
+      }
+      
       // Check if getUserMedia is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('getUserMedia not supported by this browser');
@@ -73,6 +93,33 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         srcObject: !!videoRef.current?.srcObject
       });
       
+      // Check for HTTPS requirement
+      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        console.warn('⚠️ Camera requires HTTPS in production. Current protocol:', window.location.protocol);
+      }
+      
+      // Check if we're in an iframe (can cause camera issues)
+      if (window !== window.top) {
+        console.warn('⚠️ Running in iframe - this may cause camera permission issues');
+      }
+      
+      // Check document visibility (hidden tabs can't access camera)
+      console.log('👁️ Document visibility state:', document.visibilityState);
+      
+      // Check available media devices
+      if (navigator.mediaDevices.enumerateDevices) {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(device => device.kind === 'videoinput');
+          console.log('📷 Available video devices:', videoDevices.length);
+          videoDevices.forEach((device, index) => {
+            console.log(`   ${index + 1}. ${device.label || 'Unknown Camera'} (${device.deviceId})`);
+          });
+        } catch (deviceError) {
+          console.log('⚠️ Could not enumerate devices:', deviceError);
+        }
+      }
+      
       // First try with back camera
       let constraints = {
         video: { 
@@ -86,6 +133,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       
       let stream;
       try {
+        console.log('🎯 Attempting getUserMedia with constraints:', JSON.stringify(constraints, null, 2));
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         console.log('✅ Got back camera stream:', {
           id: stream.id,
@@ -107,7 +155,12 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         }
         
       } catch (backCameraError) {
-        console.log('⚠️ Back camera failed, trying front camera:', backCameraError);
+        console.log('⚠️ Back camera failed, trying front camera:', {
+          name: backCameraError instanceof Error ? backCameraError.name : 'Unknown',
+          message: backCameraError instanceof Error ? backCameraError.message : backCameraError,
+          constraint: backCameraError instanceof Error && 'constraint' in backCameraError ? backCameraError.constraint : 'Unknown'
+        });
+        
         // Fallback to front camera or any available camera
         constraints = {
           video: {
@@ -117,9 +170,23 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
           }
         };
         
-        console.log('🎯 Trying fallback constraints:', constraints);
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
-        console.log('✅ Got front camera stream');
+        console.log('🎯 Trying fallback constraints:', JSON.stringify(constraints, null, 2));
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+          console.log('✅ Got front camera stream');
+        } catch (frontCameraError) {
+          console.error('❌ Front camera also failed:', {
+            name: frontCameraError instanceof Error ? frontCameraError.name : 'Unknown',
+            message: frontCameraError instanceof Error ? frontCameraError.message : frontCameraError,
+            constraint: frontCameraError instanceof Error && 'constraint' in frontCameraError ? frontCameraError.constraint : 'Unknown'
+          });
+          
+          // Try basic constraints as last resort
+          console.log('🎯 Trying basic video constraints as last resort...');
+          const basicConstraints = { video: true };
+          stream = await navigator.mediaDevices.getUserMedia(basicConstraints);
+          console.log('✅ Got basic video stream');
+        }
       }
       
       if (!videoRef.current) {
