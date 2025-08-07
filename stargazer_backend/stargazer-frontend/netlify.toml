@@ -31,7 +31,7 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.nasa.gov https://apod.nasa.gov https://hubblesite.org https://*.amazonaws.com; media-src 'self' blob:; connect-src 'self' https://*.supabase.co https://api.nasa.gov; font-src 'self' data:; frame-src 'none'; object-src 'none';"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.nasa.gov https://apod.nasa.gov https://hubblesite.org https://*.amazonaws.com; media-src 'self' blob: mediastream:; connect-src 'self' https://*.supabase.co https://api.nasa.gov; font-src 'self' data:; frame-src 'none'; object-src 'none';"
     Permissions-Policy = "camera=(self), microphone=(), geolocation=(self), accelerometer=(), gyroscope=()"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
 

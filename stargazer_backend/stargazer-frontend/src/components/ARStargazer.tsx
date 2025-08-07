@@ -135,7 +135,25 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       }
       
       console.log('🔗 Connecting stream to video element...');
+      
+      // Check for existing srcObject before assignment (cleanup)
+      if (videoRef.current.srcObject) {
+        console.log('🧹 Cleaning up existing stream');
+        const existingStream = videoRef.current.srcObject as MediaStream;
+        existingStream.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
+      
       videoRef.current.srcObject = stream;
+      
+      // Additional debugging for Netlify deployment
+      console.log('📦 Stream assignment complete. Video element state:', {
+        srcObject: !!videoRef.current.srcObject,
+        readyState: videoRef.current.readyState,
+        networkState: videoRef.current.networkState,
+        videoWidth: videoRef.current.videoWidth,
+        videoHeight: videoRef.current.videoHeight
+      });
       
       // Add comprehensive event listeners
       videoRef.current.onloadstart = () => {
@@ -225,8 +243,23 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       console.error('❌ === CAMERA INITIALIZATION FAILED ===');
       console.error('❌ Error details:', err);
       console.error('❌ Error stack:', err instanceof Error ? err.stack : 'No stack trace');
+      
+      // Check for CSP-related errors
+      if (err instanceof Error) {
+        if (err.message.includes('Content Security Policy') || 
+            err.message.includes('CSP') ||
+            err.message.includes('mediastream') ||
+            err.name === 'SecurityError') {
+          console.error('🚫 LIKELY CSP ISSUE: Content Security Policy may be blocking camera access');
+          setError('Camera blocked by security policy. This may be a deployment configuration issue.');
+        } else {
+          setError(`Camera failed: ${err.message}. Check browser permissions and console for details.`);
+        }
+      } else {
+        setError('Camera initialization failed with unknown error. Check console for details.');
+      }
+      
       setCameraStatus('failed');
-      setError(`Camera failed: ${err instanceof Error ? err.message : 'Unknown error'}. Check console for details.`);
     }
   }, []);
 
@@ -1170,10 +1203,30 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
 
   // Initialize on mount
   useEffect(() => {
+    // Add CSP violation listener for debugging
+    const handleCSPViolation = (event: SecurityPolicyViolationEvent) => {
+      console.error('🚫 CSP VIOLATION DETECTED:', {
+        violatedDirective: event.violatedDirective,
+        blockedURI: event.blockedURI,
+        lineNumber: event.lineNumber,
+        sourceFile: event.sourceFile,
+        sample: event.sample
+      });
+      
+      if (event.violatedDirective.includes('media-src') || event.blockedURI.includes('mediastream:')) {
+        console.error('🎥 CAMERA CSP ISSUE: media-src directive is blocking camera stream');
+        setError('Camera blocked by Content Security Policy - deployment configuration issue');
+        setCameraStatus('failed');
+      }
+    };
+    
+    document.addEventListener('securitypolicyviolation', handleCSPViolation);
+    
     initializeARStargazer();
 
     return () => {
       // Cleanup
+      document.removeEventListener('securitypolicyviolation', handleCSPViolation);
       if (frameRef.current) {
         cancelAnimationFrame(frameRef.current);
       }
@@ -1273,6 +1326,8 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         autoPlay
         playsInline
         muted
+        controls={false}
+        webkit-playsinline="true"
       />
       
       {/* Three.js overlay */}
