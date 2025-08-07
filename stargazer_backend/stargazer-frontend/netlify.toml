@@ -1,16 +1,19 @@
 [build]
-  # Directory to change to before starting a build
-  base = "."
+  # Directory to change to before starting a build (frontend is nested)
+  base = "stargazer_backend/stargazer-frontend"
   
-  # Directory containing the deploy-ready HTML files and assets
+  # Directory containing the deploy-ready HTML files and assets (relative to base)
   publish = "build"
   
   # Default build command
-  command = "npm run build"
+  command = "npm ci && npm run build"
 
 [build.environment]
   # Node.js version
   NODE_VERSION = "18"
+  # Build optimizations
+  CI = "true"
+  GENERATE_SOURCEMAP = "false"
 
 # Redirect rules for Single Page Application
 [[redirects]]
@@ -18,7 +21,7 @@
   to = "/index.html"
   status = 200
 
-# Security headers
+# Enhanced security headers
 [[headers]]
   for = "/*"
   [headers.values]
@@ -26,3 +29,12 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co https://api.nasa.gov; font-src 'self' data:; frame-src 'none'; object-src 'none';"
+    Permissions-Policy = "camera=(self), microphone=(), geolocation=(self), accelerometer=(), gyroscope=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+
+# Additional headers for static assets
+[[headers]]
+  for = "/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
