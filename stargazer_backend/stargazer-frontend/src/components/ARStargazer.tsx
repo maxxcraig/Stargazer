@@ -26,12 +26,10 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
   const [planetCount, setPlanetCount] = useState(0);
   const [deviceOrientation, setDeviceOrientation] = useState<DeviceOrientation | null>(null);
   const [location, setLocation] = useState<GeolocationCoords | null>(null);
-  const [isDesktopMode, setIsDesktopMode] = useState(true); // Force desktop mode for testing
-  const [manualOrientation, setManualOrientation] = useState({ alpha: 0, beta: 0, gamma: 0 });
+  const [isDesktopMode] = useState(true); // Desktop mode for web deployment
   const [isDragging, setIsDragging] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
   const [cameraRotation, setCameraRotation] = useState({ x: 0, y: 0 });
-  const [mouseDownPos, setMouseDownPos] = useState({ x: 0, y: 0 });
   const [hasDragged, setHasDragged] = useState(false);
   const [cameraStatus, setCameraStatus] = useState<'requesting' | 'active' | 'failed' | 'none'>('none');
   
@@ -60,68 +58,14 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       setCameraStatus('requesting');
       console.log('🎥 === CAMERA INITIALIZATION STARTED ===');
       
-      // Comprehensive environment diagnostics
-      console.log('🌍 === ENVIRONMENT DIAGNOSTICS ===');
-      console.log('📍 Location:', window.location.href);
-      console.log('🔒 Protocol:', window.location.protocol);
-      console.log('🌐 User Agent:', navigator.userAgent);
-      console.log('📱 Platform:', navigator.platform);
-      console.log('🎬 MediaDevices available:', !!navigator.mediaDevices);
-      console.log('🎥 getUserMedia available:', !!navigator.mediaDevices?.getUserMedia);
-      console.log('📋 Permissions API available:', !!navigator.permissions);
-      
-      // Check current permissions
-      if (navigator.permissions) {
-        try {
-          const cameraPermission = await navigator.permissions.query({ name: 'camera' as PermissionName });
-          console.log('🔐 Current camera permission:', cameraPermission.state);
-        } catch (permError) {
-          console.log('⚠️ Could not query camera permission:', permError);
-        }
-      }
+      // Check if getUserMedia is available
       
       // Check if getUserMedia is available
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('getUserMedia not supported by this browser');
       }
       
-      // Check current video element state
-      console.log('📺 Video element check:', {
-        exists: !!videoRef.current,
-        readyState: videoRef.current?.readyState,
-        networkState: videoRef.current?.networkState,
-        paused: videoRef.current?.paused,
-        ended: videoRef.current?.ended,
-        currentSrc: videoRef.current?.currentSrc,
-        srcObject: !!videoRef.current?.srcObject
-      });
       
-      // Check for HTTPS requirement
-      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-        console.warn('⚠️ Camera requires HTTPS in production. Current protocol:', window.location.protocol);
-      }
-      
-      // Check if we're in an iframe (can cause camera issues)
-      if (window !== window.top) {
-        console.warn('⚠️ Running in iframe - this may cause camera permission issues');
-      }
-      
-      // Check document visibility (hidden tabs can't access camera)
-      console.log('👁️ Document visibility state:', document.visibilityState);
-      
-      // Check available media devices
-      if (navigator.mediaDevices.enumerateDevices) {
-        try {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const videoDevices = devices.filter(device => device.kind === 'videoinput');
-          console.log('📷 Available video devices:', videoDevices.length);
-          videoDevices.forEach((device, index) => {
-            console.log(`   ${index + 1}. ${device.label || 'Unknown Camera'} (${device.deviceId})`);
-          });
-        } catch (deviceError) {
-          console.log('⚠️ Could not enumerate devices:', deviceError);
-        }
-      }
       
       // First try with back camera
       let constraints = {
@@ -132,38 +76,11 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         }
       };
       
-      console.log('🎯 Trying constraints:', constraints);
-      
       let stream;
       try {
-        console.log('🎯 Attempting getUserMedia with constraints:', JSON.stringify(constraints, null, 2));
         stream = await navigator.mediaDevices.getUserMedia(constraints);
-        console.log('✅ Got back camera stream:', {
-          id: stream.id,
-          active: stream.active,
-          videoTracks: stream.getVideoTracks().length,
-          audioTracks: stream.getAudioTracks().length
-        });
-        
-        // Log video track details
-        const videoTrack = stream.getVideoTracks()[0];
-        if (videoTrack) {
-          console.log('📹 Video track details:', {
-            label: videoTrack.label,
-            kind: videoTrack.kind,
-            enabled: videoTrack.enabled,
-            readyState: videoTrack.readyState,
-            settings: videoTrack.getSettings()
-          });
-        }
         
       } catch (backCameraError) {
-        console.log('⚠️ Back camera failed, trying front camera:', {
-          name: backCameraError instanceof Error ? backCameraError.name : 'Unknown',
-          message: backCameraError instanceof Error ? backCameraError.message : backCameraError,
-          constraint: backCameraError instanceof Error && 'constraint' in backCameraError ? backCameraError.constraint : 'Unknown'
-        });
-        
         // Fallback to front camera or any available camera
         constraints = {
           video: {
@@ -173,28 +90,16 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
           }
         };
         
-        console.log('🎯 Trying fallback constraints:', JSON.stringify(constraints, null, 2));
         try {
           stream = await navigator.mediaDevices.getUserMedia(constraints);
-          console.log('✅ Got front camera stream');
         } catch (frontCameraError) {
-          console.error('❌ Front camera also failed:', {
-            name: frontCameraError instanceof Error ? frontCameraError.name : 'Unknown',
-            message: frontCameraError instanceof Error ? frontCameraError.message : frontCameraError,
-            constraint: frontCameraError instanceof Error && 'constraint' in frontCameraError ? frontCameraError.constraint : 'Unknown'
-          });
-          
           // Try basic constraints as last resort
-          console.log('🎯 Trying basic video constraints as last resort...');
           const basicConstraints = { video: true };
           stream = await navigator.mediaDevices.getUserMedia(basicConstraints);
-          console.log('✅ Got basic video stream');
         }
       }
       
       if (!videoRef.current) {
-        console.error('❌ Video element is null! Waiting for it to mount...');
-        
         // Wait for video element to be available with retry logic
         let retries = 0;
         const maxRetries = 10;
@@ -202,11 +107,9 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
           return new Promise<void>((resolve, reject) => {
             const checkElement = () => {
               if (videoRef.current) {
-                console.log('✅ Video element now available after waiting');
                 resolve();
               } else if (retries < maxRetries) {
                 retries++;
-                console.log(`⏳ Waiting for video element... attempt ${retries}/${maxRetries}`);
                 setTimeout(checkElement, 100);
               } else {
                 reject(new Error('Video element never became available'));
@@ -219,26 +122,20 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         try {
           await waitForVideoElement();
         } catch (waitError) {
-          console.error('❌ Video element wait failed, storing stream for later:', waitError);
           // Store the stream and try to connect it later when video element is ready
           pendingStreamRef.current = stream;
           streamRef.current = stream;
-          console.log('💾 Stream stored for later connection');
           return; // Exit early, will try to connect later
         }
       }
       
       if (!stream) {
-        console.error('❌ Stream is null!');
         setCameraStatus('failed');
         return;
       }
       
-      console.log('🔗 Connecting stream to video element...');
-      
       // Check for existing srcObject before assignment (cleanup)
       if (videoRef.current && videoRef.current.srcObject) {
-        console.log('🧹 Cleaning up existing stream');
         const existingStream = videoRef.current.srcObject as MediaStream;
         existingStream.getTracks().forEach(track => track.stop());
         videoRef.current.srcObject = null;
@@ -248,61 +145,19 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         videoRef.current.srcObject = stream;
       }
       
-      // Additional debugging for Netlify deployment
-      console.log('📦 Stream assignment complete. Video element state:', {
-        srcObject: !!videoRef.current?.srcObject,
-        readyState: videoRef.current?.readyState,
-        networkState: videoRef.current?.networkState,
-        videoWidth: videoRef.current?.videoWidth,
-        videoHeight: videoRef.current?.videoHeight
-      });
       
       // Add comprehensive event listeners
       if (videoRef.current) {
-        videoRef.current.onloadstart = () => {
-          console.log('📺 Video loadstart event');
-        };
-        
-        videoRef.current.onloadeddata = () => {
-          console.log('📺 Video loadeddata event');
-        };
-        
         videoRef.current.onloadedmetadata = () => {
-          console.log('✅ Video metadata loaded', {
-            videoWidth: videoRef.current?.videoWidth,
-            videoHeight: videoRef.current?.videoHeight,
-            readyState: videoRef.current?.readyState,
-            duration: videoRef.current?.duration,
-            paused: videoRef.current?.paused
-          });
           setCameraStatus('active');
-        };
-        
-        videoRef.current.oncanplay = () => {
-          console.log('✅ Video can play - ready state:', videoRef.current?.readyState);
         };
         
         videoRef.current.onplay = () => {
-          console.log('✅ Video started playing');
           setCameraStatus('active');
-        };
-        
-        videoRef.current.onplaying = () => {
-          console.log('✅ Video is actively playing');
         };
 
         videoRef.current.onerror = (e) => {
-          console.error('❌ Video element error:', e);
-          console.error('❌ Video error details:', videoRef.current?.error);
           setCameraStatus('failed');
-        };
-        
-        videoRef.current.onstalled = () => {
-          console.warn('⚠️ Video stalled');
-        };
-        
-        videoRef.current.onwaiting = () => {
-          console.warn('⚠️ Video waiting');
         };
         
         // Ensure video is visible
@@ -312,32 +167,22 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         }
       }
       
-      console.log('▶️ Attempting to play video...');
       if (videoRef.current) {
         try {
           const playPromise = videoRef.current.play();
           if (playPromise !== undefined) {
             await playPromise;
-            console.log('✅ Video play promise resolved');
           }
         } catch (playError) {
-          console.error('❌ Video play failed:', playError);
-          
           // Try alternative play approaches
-          console.log('🔄 Trying alternative play methods...');
-          
           if (videoRef.current) {
-            // Method 1: Set autoplay and reload
             videoRef.current.autoplay = true;
             videoRef.current.muted = true;
             videoRef.current.playsInline = true;
             
-            // Method 2: Direct play call
             setTimeout(() => {
               if (videoRef.current) {
-                videoRef.current.play().catch(e => {
-                  console.error('❌ Delayed play also failed:', e);
-                });
+                videoRef.current.play().catch(e => {});
               }
             }, 100);
           }
@@ -347,23 +192,15 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       // Only set streamRef if we successfully connected to video element
       if (videoRef.current && videoRef.current.srcObject) {
         streamRef.current = stream;
-        console.log('✅ === CAMERA INITIALIZATION COMPLETED ===');
-      } else {
-        console.log('✅ === CAMERA STREAM OBTAINED, WAITING FOR VIDEO CONNECTION ===');
       }
       
     } catch (err) {
-      console.error('❌ === CAMERA INITIALIZATION FAILED ===');
-      console.error('❌ Error details:', err);
-      console.error('❌ Error stack:', err instanceof Error ? err.stack : 'No stack trace');
-      
       // Check for CSP-related errors
       if (err instanceof Error) {
         if (err.message.includes('Content Security Policy') || 
             err.message.includes('CSP') ||
             err.message.includes('mediastream') ||
             err.name === 'SecurityError') {
-          console.error('🚫 LIKELY CSP ISSUE: Content Security Policy may be blocking camera access');
           setError('Camera blocked by security policy. This may be a deployment configuration issue.');
         } else {
           setError(`Camera failed: ${err.message}. Check browser permissions and console for details.`);
@@ -427,19 +264,12 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         console.log('📍 Using default location for desktop mode:', defaultLocation);
       }
       
-      // Set initial orientation for desktop mode - sync with camera rotation
+      // Set initial orientation for desktop mode
       const initialOrientation = { alpha: 0, beta: 0, gamma: 0 };
-      setManualOrientation(initialOrientation);
       setDeviceOrientation(initialOrientation);
 
-      console.log('📚 Initializing star catalog...');
       await starCatalogRef.current.initialize();
-      console.log('✅ Star catalog initialized');
-
-      // Set up Three.js scene
-      console.log('🎬 Setting up Three.js scene...');
       setupThreeJS();
-      console.log('✅ Three.js scene ready');
 
       // Skip sensor setup in desktop mode
       
@@ -491,17 +321,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     // Add constellation lines group to scene
     scene.add(constellationLinesRef.current);
     
-    // Add test star directly in front of camera for debugging
-    console.log('🧪 Adding test star directly in front of camera...');
-    const testGeometry = new THREE.SphereGeometry(10, 16, 12); // Very large test star
-    const testMaterial = new THREE.MeshBasicMaterial({ 
-      color: 0xff0000, // Bright red
-      transparent: false
-    });
-    const testStar = new THREE.Mesh(testGeometry, testMaterial);
-    testStar.position.set(0, 0, -50); // Directly in front of camera at (0,0,0)
-    scene.add(testStar);
-    console.log('🧪 Test star added at (0, 0, -50) - should be directly visible');
+    // Test star removed - stars are working now!
 
     // Add renderer to DOM and make sure it's visible
     renderer.domElement.style.pointerEvents = 'auto';
@@ -562,14 +382,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
    * Update star field based on location and time - SIMPLIFIED VERSION
    */
   const updateStarField = useCallback((currentLocation: GeolocationCoords) => {
-    console.log('🚀 updateStarField called with location:', currentLocation);
-    console.log('🔍 starCatalogRef.current:', !!starCatalogRef.current);
-    console.log('🔍 sceneRef.current:', !!sceneRef.current);
-    
-    if (!starCatalogRef.current || !sceneRef.current) {
-      console.error('❌ Missing refs - starCatalog:', !!starCatalogRef.current, 'scene:', !!sceneRef.current);
-      return;
-    }
+    if (!starCatalogRef.current || !sceneRef.current) return;
 
     try {
       // Clear existing stars, planets and constellation lines
@@ -598,33 +411,19 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       constellationLabelsRef.current.clear();
 
       // Get all stars from catalog - simplified approach
-      console.log('🔍 Attempting to access star catalog...');
-      console.log('🔍 starCatalogRef.current type:', typeof starCatalogRef.current);
-      console.log('🔍 starCatalogRef.current keys:', Object.keys(starCatalogRef.current || {}));
-      
       const allStars = Array.from(starCatalogRef.current['stars'].values());
-      console.log(`Total stars in catalog: ${allStars.length}`);
       
       // Create simplified star placement - just put them around us in a sphere
-      console.log(`🌟 Creating ${allStars.length} stars...`);
       allStars.forEach((star, index) => {
-        console.log(`🔧 Creating star ${index + 1}/${allStars.length}: ${star.name}`);
         createSimplifiedStarObject(star, index);
       });
-      console.log(`✅ Finished creating ${allStars.length} stars`);
 
       // Create planets and sun
-      console.log('🪐 Creating planets and sun...');
       const planets = starCatalogRef.current.getPlanets();
-      console.log(`📊 Total planets in catalog: ${planets.length}`);
       planets.forEach((planet, index) => {
-        console.log(`🔍 Processing planet: ${planet.name} (${planet.id})`);
         // Skip Earth since we're observing from Earth
         if (planet.id !== 'earth') {
-          console.log(`➡️ Creating ${planet.name}...`);
           createPlanetObject(planet, currentLocation, index);
-        } else {
-          console.log(`⏭️ Skipping Earth (we're observing from Earth)`);
         }
       });
 
@@ -636,27 +435,6 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       setStarCount(allStars.length);
       setConstellationCount(constellations.length);
       setPlanetCount(planets.length);
-      
-      // Final debug check
-      console.log(`📊 FINAL COUNTS:`);
-      console.log(`   - Stars: ${allStars.length} (${starObjectsRef.current.size} in scene)`);
-      console.log(`   - Planets: ${planets.length} total (${planetObjectsRef.current.size} in scene)`);
-      console.log(`   - Constellations: ${constellations.length}`);
-      
-      // List all planets that were processed
-      const processedPlanets = Array.from(planetObjectsRef.current.keys());
-      console.log(`🚀 Planets in scene: ${processedPlanets.join(', ')}`);
-      
-      // Give user-friendly summary for full sphere
-      if (processedPlanets.length > 0) {
-        console.log(`🌌 ALL PLANETS RENDERED: Drag around to find ${processedPlanets.map(id => {
-          const planet = starCatalogRef.current?.getPlanet(id);
-          return planet?.commonName || id;
-        }).join(', ')}!`);
-        console.log(`🌍 TIP: At night, drag DOWN to see the Sun through the Earth!`);
-      } else {
-        console.log(`❓ No planets rendered - check console for errors`);
-      }
       
       console.log(`Created ${allStars.length} stars, ${planets.length} planets, and ${constellations.length} constellations in simplified layout`);
 
@@ -696,13 +474,12 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
 
     // Realistic star sizes like SkyView Lite
     const starSize = getStarSize(star.magnitude);
-    const starColor = getStarColor(star.magnitude);
     
-    // Make stars MUCH larger and brighter for debugging visibility
-    const geometry = new THREE.SphereGeometry(Math.max(starSize * 5, 4.0), 8, 6); // Even bigger
+    // Right-sized white stars 
+    const geometry = new THREE.SphereGeometry(Math.max(starSize * 2.5, 2.0), 8, 6); // Much smaller but still visible
     const material = new THREE.MeshBasicMaterial({ 
-      color: 0xffff00, // Bright yellow for high visibility
-      transparent: false, // No transparency for brightness
+      color: 0xffffff, // White stars 
+      transparent: false,
       opacity: 1.0,
     });
 
@@ -986,8 +763,8 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       const y = distance * Math.sin(altitudeRad);
       const z = -distance * Math.cos(altitudeRad) * Math.cos(azimuthRad);
 
-      // Create planet geometry with appropriate size
-      const geometry = new THREE.SphereGeometry(planet.radius, 12, 8);
+      // Create planet geometry with appropriate size - keep slightly smaller
+      const geometry = new THREE.SphereGeometry(planet.radius * 0.9, 12, 8);
       const material = new THREE.MeshBasicMaterial({ 
         color: planet.color,
         transparent: false,
@@ -1153,25 +930,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     return 0.8; // Dim stars
   };
 
-  /**
-   * Get star color based on spectral class and magnitude
-   */
-  const getStarColor = (magnitude: number): number => {
-    if (magnitude < 0) return 0xffffff; // Very bright stars - white
-    if (magnitude < 1) return 0xf0f0ff; // Bright stars - slightly blue-white
-    if (magnitude < 2) return 0xe8e8ff; // Moderately bright - pale blue
-    if (magnitude < 3) return 0xd0d0ff; // Medium - light blue
-    return 0xc0c0f0; // Dim - blue-gray
-  };
 
-  /**
-   * Get star opacity based on magnitude
-   */
-  const getStarOpacity = (magnitude: number): number => {
-    const clampedMagnitude = Math.max(-2, Math.min(6, magnitude));
-    // Make stars more visible
-    return Math.max(0.7, Math.min(1.0, 1.0 - (clampedMagnitude + 2) / 8));
-  };
 
   /**
    * Animation loop - Simple and stable
@@ -1218,9 +977,6 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     setHasDragged(false);
     const pos = { x: event.clientX, y: event.clientY };
     setLastMousePos(pos);
-    setMouseDownPos(pos);
-    console.log('🟢 MOUSE DOWN - Started at:', event.clientX, event.clientY);
-    console.log('🎯 Camera ref available for dragging:', !!cameraRef.current);
   }, []);
 
   /**
@@ -1232,7 +988,6 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     }
     
     if (!cameraRef.current) {
-      console.log('❌ Camera ref not available - camera may not be initialized yet');
       return;
     }
 
@@ -1266,8 +1021,6 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     });
     
     setLastMousePos({ x: event.clientX, y: event.clientY });
-    
-    console.log(`🔄 DRAGGING - unlimited rotation: (${newRotationX.toFixed(2)}, ${newRotationY.toFixed(2)}) Az: ${azimuth.toFixed(1)}° Alt: ${altitude.toFixed(1)}°`);
   }, [isDragging, lastMousePos, cameraRotation]);
 
   /**
@@ -1279,7 +1032,6 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       
       // If we haven't dragged much, treat it as a click
       if (!hasDragged) {
-        console.log('👆 CLICK detected - checking for star click');
         // Inline click detection
         if (cameraRef.current && sceneRef.current) {
           const mouse = new THREE.Vector2();
@@ -1300,16 +1052,12 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
           if (intersects.length > 0) {
             const userData = intersects[0].object.userData;
             if (userData.star) {
-              console.log(`⭐ CLICKED ON STAR: ${userData.star.name}`);
               onStarClick?.(userData.star);
             } else if (userData.planet) {
-              console.log(`🪐 CLICKED ON PLANET: ${userData.planet.name}`);
               onPlanetClick?.(userData.planet);
             }
           }
         }
-      } else {
-        console.log('🔴 MOUSE UP - Stopped dragging');
       }
     }
   }, [isDragging, hasDragged, onStarClick]);
@@ -1332,26 +1080,19 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     const starObjects = Array.from(starObjectsRef.current.values());
     const planetObjects = Array.from(planetObjectsRef.current.values());
     const allObjects = [...starObjects, ...planetObjects];
-    console.log(`🎯 Checking click against ${starObjects.length} stars and ${planetObjects.length} planets at mouse (${mouse.x.toFixed(2)}, ${mouse.y.toFixed(2)})`);
     
     // Make raycaster more generous for easier clicking
     raycaster.params.Points.threshold = 2.0;
     
     const intersects = raycaster.intersectObjects(allObjects);
     
-    console.log(`Found ${intersects.length} intersections`);
-    
     if (intersects.length > 0) {
       const userData = intersects[0].object.userData;
       if (userData.star) {
-        console.log(`⭐ CLICKED ON STAR: ${userData.star.name} (${userData.star.commonName})`);
         onStarClick?.(userData.star);
       } else if (userData.planet) {
-        console.log(`🪐 CLICKED ON PLANET: ${userData.planet.name}`);
         onPlanetClick?.(userData.planet);
       }
-    } else {
-      console.log('❌ No celestial object clicked');
     }
   }, [onStarClick, onPlanetClick]);
 
@@ -1359,16 +1100,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
   useEffect(() => {
     // Add CSP violation listener for debugging
     const handleCSPViolation = (event: SecurityPolicyViolationEvent) => {
-      console.error('🚫 CSP VIOLATION DETECTED:', {
-        violatedDirective: event.violatedDirective,
-        blockedURI: event.blockedURI,
-        lineNumber: event.lineNumber,
-        sourceFile: event.sourceFile,
-        sample: event.sample
-      });
-      
       if (event.violatedDirective.includes('media-src') || event.blockedURI.includes('mediastream:')) {
-        console.error('🎥 CAMERA CSP ISSUE: media-src directive is blocking camera stream');
         setError('Camera blocked by Content Security Policy - deployment configuration issue');
         setCameraStatus('failed');
       }
@@ -1402,13 +1134,10 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       window.addEventListener('mouseup', handleMouseUp);
       
       if (mountRef.current) {
-        console.log('🎯 MOUNT ELEMENT FOUND - Adding mouse event listeners');
         mountRef.current.addEventListener('click', handleClick);
         mountRef.current.addEventListener('mousedown', handleMouseDown);
         mountRef.current.addEventListener('mousemove', handleMouseMove);
-        console.log('✅ SkyView Lite style drag controls enabled');
       } else {
-        console.log('❌ MOUNT ELEMENT NOT FOUND - retrying in 100ms');
         setTimeout(setupEventListeners, 100);
       }
     };
@@ -1429,32 +1158,42 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
   // Update star field when location changes
   useEffect(() => {
     if (location && isInitialized) {
-      updateStarField(location);
+        updateStarField(location);
     }
   }, [location, isInitialized, updateStarField]);
+
+  // Force star field update after a delay if not visible
+  useEffect(() => {
+    if (isInitialized && location) {
+      const checkStars = () => {
+        if (starObjectsRef.current.size === 0) {
+          updateStarField(location);
+        }
+      };
+      
+      const timeout = setTimeout(checkStars, 2000); // Check after 2 seconds
+      return () => clearTimeout(timeout);
+    }
+  }, [isInitialized, location, updateStarField]);
 
   // Connect pending stream when video element becomes available
   useEffect(() => {
     const connectPendingStream = () => {
       if (videoRef.current && pendingStreamRef.current && !videoRef.current.srcObject) {
-        console.log('🔄 Video element now available, connecting pending stream...');
         
         try {
           videoRef.current.srcObject = pendingStreamRef.current;
           
           // Set up event listeners for the delayed connection
           videoRef.current.onloadedmetadata = () => {
-            console.log('✅ Delayed stream metadata loaded');
             setCameraStatus('active');
           };
           
           videoRef.current.onplay = () => {
-            console.log('✅ Delayed stream started playing');
             setCameraStatus('active');
           };
           
           videoRef.current.onerror = (e) => {
-            console.error('❌ Delayed stream error:', e);
             setCameraStatus('failed');
           };
           
@@ -1463,11 +1202,9 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
             console.error('❌ Delayed stream play failed:', e);
           });
           
-          console.log('✅ Pending stream connected successfully');
           pendingStreamRef.current = null; // Clear pending stream
           
         } catch (err) {
-          console.error('❌ Failed to connect pending stream:', err);
           setCameraStatus('failed');
         }
       }

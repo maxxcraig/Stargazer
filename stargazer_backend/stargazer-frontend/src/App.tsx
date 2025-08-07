@@ -30,14 +30,12 @@ function AppContent() {
       // Only restore saved page for authenticated users
       const hash = window.location.hash.slice(1) as 'home' | 'stargazer' | 'about' | 'nasa';
       if (['home', 'stargazer', 'about', 'nasa'].includes(hash)) {
-        console.log('📍 Restoring page from URL hash:', hash);
         setCurrentPage(hash);
         return;
       }
       
       const saved = localStorage.getItem('stargazer-current-page') as 'home' | 'stargazer' | 'about' | 'nasa';
       if (['home', 'stargazer', 'about', 'nasa'].includes(saved)) {
-        console.log('📍 Restoring page from localStorage:', saved);
         setCurrentPage(saved);
       }
     }
@@ -61,20 +59,17 @@ function AppContent() {
   }, [currentPage]);
 
   const handleStarClick = (star: Star) => {
-    console.log(`🌟 App: Star clicked - ${star.name}, opening modal`);
     setSelectedStar(star);
     setSelectedPlanet(null); // Clear planet selection
   };
 
   const handlePlanetClick = (planet: Planet) => {
-    console.log(`🪐 App: Planet clicked - ${planet.name}, opening modal`);
     setSelectedPlanet(planet);
     setSelectedStar(null); // Clear star selection
   };
 
   const handleError = (errorMessage: string) => {
     setError(errorMessage);
-    console.error('Stargazer error:', errorMessage);
   };
 
   const navigateToHome = () => {
@@ -102,7 +97,6 @@ function AppContent() {
   };
 
   const handleLogout = async () => {
-    console.log(`👋 App: User logging out`);
     await signOut();
     setSelectedStar(null);
     setSelectedPlanet(null);
@@ -110,16 +104,12 @@ function AppContent() {
   };
 
   const closeCelestialInfo = () => {
-    const objectName = selectedStar?.name || selectedPlanet?.name || 'unknown object';
-    console.log(`❌ App: Closing celestial info modal for ${objectName} - refreshing AR component`);
-    
     // Clear the selected objects
     setSelectedStar(null);
     setSelectedPlanet(null);
     
     // Force ARStargazer to remount by changing its key
     if (currentPage === 'stargazer') {
-      console.log('🔄 Forcing ARStargazer remount to reactivate camera');
       setStargazerKey(prev => prev + 1);
     }
   };
@@ -147,7 +137,7 @@ function AppContent() {
     return <AuthScreen />;
   }
 
-  const username = user.email?.split('@')[0] || 'User';
+  const username = user?.email?.split('@')[0] || 'TestUser';
 
   // Render different pages based on current page state
   const renderCurrentPage = () => {
