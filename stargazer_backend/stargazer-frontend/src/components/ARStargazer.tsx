@@ -514,7 +514,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       height,
       canvasId: renderer.domElement.id,
       transparent: renderer.domElement.style.background,
-      clearColor: renderer.getClearColor().getHexString(),
+      clearColor: renderer.getClearColor().getHex(),
       clearAlpha: renderer.getClearAlpha(),
       domElementSize: {
         width: renderer.domElement.width,
