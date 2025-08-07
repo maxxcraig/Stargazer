@@ -75,7 +75,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         // Fallback to front camera or any available camera
         constraints = {
           video: {
-            facingMode: 'user', // Front camera fallback
+            facingMode: { ideal: 'user' }, // Front camera fallback
             width: { ideal: 1280 },
             height: { ideal: 720 }
           }
