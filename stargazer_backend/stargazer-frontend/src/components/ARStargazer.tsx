@@ -489,6 +489,18 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
 
     // Add constellation lines group to scene
     scene.add(constellationLinesRef.current);
+    
+    // Add test star directly in front of camera for debugging
+    console.log('🧪 Adding test star directly in front of camera...');
+    const testGeometry = new THREE.SphereGeometry(10, 16, 12); // Very large test star
+    const testMaterial = new THREE.MeshBasicMaterial({ 
+      color: 0xff0000, // Bright red
+      transparent: false
+    });
+    const testStar = new THREE.Mesh(testGeometry, testMaterial);
+    testStar.position.set(0, 0, -50); // Directly in front of camera at (0,0,0)
+    scene.add(testStar);
+    console.log('🧪 Test star added at (0, 0, -50) - should be directly visible');
 
     // Add renderer to DOM and make sure it's visible
     renderer.domElement.style.pointerEvents = 'auto';
@@ -501,7 +513,13 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       width,
       height,
       canvasId: renderer.domElement.id,
-      transparent: renderer.domElement.style.background
+      transparent: renderer.domElement.style.background,
+      clearColor: renderer.getClearColor().getHexString(),
+      clearAlpha: renderer.getClearAlpha(),
+      domElementSize: {
+        width: renderer.domElement.width,
+        height: renderer.domElement.height
+      }
     });
 
     // Start render loop
@@ -671,10 +689,10 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     const starSize = getStarSize(star.magnitude);
     const starColor = getStarColor(star.magnitude);
     
-    // Make stars much larger and brighter for debugging
-    const geometry = new THREE.SphereGeometry(Math.max(starSize * 3, 2.0), 8, 6);
+    // Make stars MUCH larger and brighter for debugging visibility
+    const geometry = new THREE.SphereGeometry(Math.max(starSize * 5, 4.0), 8, 6); // Even bigger
     const material = new THREE.MeshBasicMaterial({ 
-      color: 0xffffff, // Bright white
+      color: 0xffff00, // Bright yellow for high visibility
       transparent: false, // No transparency for brightness
       opacity: 1.0,
     });
@@ -701,7 +719,13 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     
     // Check if star is in front of camera (negative Z)
     const inView = z < 0 ? '✅ IN VIEW' : '❌ BEHIND CAMERA';
-    console.log(`⭐ ADDED STAR ${star.name} at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}) - size: ${starSize.toFixed(2)} - ${inView}`);
+    const distanceFromOrigin = Math.sqrt(x*x + y*y + z*z);
+    console.log(`⭐ ADDED STAR ${star.name} at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}) - size: ${starSize.toFixed(2)} - distance: ${distanceFromOrigin.toFixed(1)} - ${inView}`);
+    
+    // Add debug info about camera looking direction vs star position
+    const starDirection = { x, y, z };
+    const cameraDirection = { x: 0, y: 0, z: -1 }; // Camera looks toward -Z
+    console.log(`🎯 ${star.name}: Camera looks at ${JSON.stringify(cameraDirection)}, star at ${JSON.stringify(starDirection)}`);
 
     // Create label for bright stars only (like SkyView Lite)
     if (star.magnitude < 2.0) {
@@ -1146,9 +1170,16 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
   const animate = useCallback(() => {
     if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
 
-    // Debug: Log scene info periodically
+    // Debug: Log scene info periodically with star count
     if (frameRef.current && frameRef.current % 300 === 0) {
-      console.log('🎬 Rendering scene with', sceneRef.current.children.length, 'objects');
+      const stars = starObjectsRef.current.size;
+      const planets = planetObjectsRef.current.size;
+      console.log(`🎬 Rendering scene with ${sceneRef.current.children.length} objects (${stars} stars, ${planets} planets)`);
+      
+      // Check if any stars are visible in camera frustum
+      const cameraPos = cameraRef.current.position;
+      const cameraRot = cameraRef.current.rotation;
+      console.log(`📷 Camera: pos(${cameraPos.x.toFixed(1)}, ${cameraPos.y.toFixed(1)}, ${cameraPos.z.toFixed(1)}) rot(${cameraRot.x.toFixed(2)}, ${cameraRot.y.toFixed(2)}, ${cameraRot.z.toFixed(2)})`);
     }
 
     rendererRef.current.render(sceneRef.current, cameraRef.current);
@@ -1509,7 +1540,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       </div>
 
       {/* Camera Status */}
-      {cameraStatus !== 'none' && (
+      {cameraStatus !== 'none' && cameraStatus !== 'active' && (
         <div style={{
           ...styles.instructionsPanel,
           top: '60px',
@@ -1519,7 +1550,6 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         }}>
           <p style={styles.instructionsText}>
             {cameraStatus === 'requesting' && '📹 Requesting camera access...'}
-            {cameraStatus === 'active' && '✅ Camera active'}
             {cameraStatus === 'failed' && '❌ Camera failed - check permissions'}
           </p>
         </div>
