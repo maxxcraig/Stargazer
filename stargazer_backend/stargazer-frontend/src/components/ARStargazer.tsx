@@ -89,13 +89,26 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         
         // Add event listeners for video state
         videoRef.current.onloadedmetadata = () => {
-          console.log('✅ Video metadata loaded');
+          console.log('✅ Video metadata loaded', {
+            videoWidth: videoRef.current?.videoWidth,
+            videoHeight: videoRef.current?.videoHeight,
+            readyState: videoRef.current?.readyState
+          });
           setCameraStatus('active');
         };
         
         videoRef.current.onplay = () => {
           console.log('✅ Video started playing');
           setCameraStatus('active');
+        };
+
+        videoRef.current.oncanplay = () => {
+          console.log('✅ Video can play');
+        };
+
+        videoRef.current.onerror = (e) => {
+          console.error('❌ Video element error:', e);
+          setCameraStatus('failed');
         };
         
         try {
@@ -236,8 +249,19 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     // Add constellation lines group to scene
     scene.add(constellationLinesRef.current);
 
-    // Add renderer to DOM
+    // Add renderer to DOM and make sure it's visible
+    renderer.domElement.style.pointerEvents = 'auto';
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.top = '0';
+    renderer.domElement.style.left = '0';
     mountRef.current.appendChild(renderer.domElement);
+    
+    console.log('🎨 Three.js renderer added to DOM:', {
+      width,
+      height,
+      canvasId: renderer.domElement.id,
+      transparent: renderer.domElement.style.background
+    });
 
     // Start render loop
     animate();
@@ -406,11 +430,12 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     const starSize = getStarSize(star.magnitude);
     const starColor = getStarColor(star.magnitude);
     
-    const geometry = new THREE.SphereGeometry(starSize, 8, 6);
+    // Make stars much larger and brighter for debugging
+    const geometry = new THREE.SphereGeometry(Math.max(starSize * 3, 2.0), 8, 6);
     const material = new THREE.MeshBasicMaterial({ 
       color: 0xffffff, // Bright white
       transparent: false, // No transparency for brightness
-      opacity: 1.0
+      opacity: 1.0,
     });
 
     const starMesh = new THREE.Mesh(geometry, material);
@@ -880,6 +905,11 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
   const animate = useCallback(() => {
     if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
 
+    // Debug: Log scene info periodically
+    if (frameRef.current && frameRef.current % 300 === 0) {
+      console.log('🎬 Rendering scene with', sceneRef.current.children.length, 'objects');
+    }
+
     rendererRef.current.render(sceneRef.current, cameraRef.current);
     frameRef.current = requestAnimationFrame(animate);
   }, []);
@@ -1228,6 +1258,8 @@ const styles = {
     height: '100%',
     objectFit: 'cover' as const,
     zIndex: 1,
+    display: 'block',
+    backgroundColor: '#000', // Fallback background
   },
   threeContainer: {
     position: 'absolute' as const,
@@ -1237,6 +1269,8 @@ const styles = {
     height: '100%',
     zIndex: 2,
     pointerEvents: 'auto' as const,
+    // Make Three.js transparent so video shows through
+    background: 'transparent',
   },
   loadingContainer: {
     display: 'flex',

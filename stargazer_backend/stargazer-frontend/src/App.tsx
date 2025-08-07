@@ -12,18 +12,39 @@ function AppContent() {
   const [selectedStar, setSelectedStar] = useState<Star | null>(null);
   const [selectedPlanet, setSelectedPlanet] = useState<Planet | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<'home' | 'stargazer' | 'about' | 'nasa'>('home');
+  // Initialize currentPage from URL hash or localStorage, fallback to 'home'
+  const initializePage = (): 'home' | 'stargazer' | 'about' | 'nasa' => {
+    // Check URL hash first (e.g., #stargazer)
+    const hash = window.location.hash.slice(1) as 'home' | 'stargazer' | 'about' | 'nasa';
+    if (['home', 'stargazer', 'about', 'nasa'].includes(hash)) {
+      return hash;
+    }
+    
+    // Fallback to localStorage
+    const saved = localStorage.getItem('stargazer-current-page') as 'home' | 'stargazer' | 'about' | 'nasa';
+    if (['home', 'stargazer', 'about', 'nasa'].includes(saved)) {
+      return saved;
+    }
+    
+    return 'home';
+  };
+
+  const [currentPage, setCurrentPage] = useState<'home' | 'stargazer' | 'about' | 'nasa'>(initializePage);
   const [stargazerKey, setStargazerKey] = useState(0);
   
   const { user, loading, signOut } = useAuth();
 
-  // Add/remove stargazer-mode class based on current page
+  // Add/remove stargazer-mode class based on current page and persist state
   useEffect(() => {
     if (currentPage === 'stargazer') {
       document.body.classList.add('stargazer-mode');
     } else {
       document.body.classList.remove('stargazer-mode');
     }
+    
+    // Persist current page to localStorage and URL
+    localStorage.setItem('stargazer-current-page', currentPage);
+    window.history.replaceState({}, '', currentPage === 'home' ? '/' : `/#${currentPage}`);
     
     return () => {
       document.body.classList.remove('stargazer-mode');
