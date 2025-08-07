@@ -55,7 +55,23 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
   const initializeCamera = useCallback(async () => {
     try {
       setCameraStatus('requesting');
-      console.log('🎥 Requesting camera access...');
+      console.log('🎥 === CAMERA INITIALIZATION STARTED ===');
+      
+      // Check if getUserMedia is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('getUserMedia not supported by this browser');
+      }
+      
+      // Check current video element state
+      console.log('📺 Video element check:', {
+        exists: !!videoRef.current,
+        readyState: videoRef.current?.readyState,
+        networkState: videoRef.current?.networkState,
+        paused: videoRef.current?.paused,
+        ended: videoRef.current?.ended,
+        currentSrc: videoRef.current?.currentSrc,
+        srcObject: !!videoRef.current?.srcObject
+      });
       
       // First try with back camera
       let constraints = {
@@ -66,10 +82,30 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         }
       };
       
+      console.log('🎯 Trying constraints:', constraints);
+      
       let stream;
       try {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
-        console.log('✅ Got back camera stream');
+        console.log('✅ Got back camera stream:', {
+          id: stream.id,
+          active: stream.active,
+          videoTracks: stream.getVideoTracks().length,
+          audioTracks: stream.getAudioTracks().length
+        });
+        
+        // Log video track details
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          console.log('📹 Video track details:', {
+            label: videoTrack.label,
+            kind: videoTrack.kind,
+            enabled: videoTrack.enabled,
+            readyState: videoTrack.readyState,
+            settings: videoTrack.getSettings()
+          });
+        }
+        
       } catch (backCameraError) {
         console.log('⚠️ Back camera failed, trying front camera:', backCameraError);
         // Fallback to front camera or any available camera
@@ -80,58 +116,120 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
             height: { ideal: 720 }
           }
         };
+        
+        console.log('🎯 Trying fallback constraints:', constraints);
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         console.log('✅ Got front camera stream');
       }
       
-      if (videoRef.current && stream) {
-        videoRef.current.srcObject = stream;
-        
-        // Add event listeners for video state
-        videoRef.current.onloadedmetadata = () => {
-          console.log('✅ Video metadata loaded', {
-            videoWidth: videoRef.current?.videoWidth,
-            videoHeight: videoRef.current?.videoHeight,
-            readyState: videoRef.current?.readyState
-          });
-          setCameraStatus('active');
-        };
-        
-        videoRef.current.onplay = () => {
-          console.log('✅ Video started playing');
-          setCameraStatus('active');
-        };
-
-        videoRef.current.oncanplay = () => {
-          console.log('✅ Video can play');
-        };
-
-        videoRef.current.onerror = (e) => {
-          console.error('❌ Video element error:', e);
-          setCameraStatus('failed');
-        };
-        
-        try {
-          await videoRef.current.play();
-          console.log('✅ Video element playing');
-        } catch (playError) {
-          console.error('❌ Video play failed:', playError);
-          // Try to play without awaiting - browsers sometimes require user interaction
-          videoRef.current.play();
-        }
-      } else {
-        console.error('❌ No video element or stream available');
+      if (!videoRef.current) {
+        console.error('❌ Video element is null!');
         setCameraStatus('failed');
         return;
       }
       
+      if (!stream) {
+        console.error('❌ Stream is null!');
+        setCameraStatus('failed');
+        return;
+      }
+      
+      console.log('🔗 Connecting stream to video element...');
+      videoRef.current.srcObject = stream;
+      
+      // Add comprehensive event listeners
+      videoRef.current.onloadstart = () => {
+        console.log('📺 Video loadstart event');
+      };
+      
+      videoRef.current.onloadeddata = () => {
+        console.log('📺 Video loadeddata event');
+      };
+      
+      videoRef.current.onloadedmetadata = () => {
+        console.log('✅ Video metadata loaded', {
+          videoWidth: videoRef.current?.videoWidth,
+          videoHeight: videoRef.current?.videoHeight,
+          readyState: videoRef.current?.readyState,
+          duration: videoRef.current?.duration,
+          paused: videoRef.current?.paused
+        });
+        setCameraStatus('active');
+      };
+      
+      videoRef.current.oncanplay = () => {
+        console.log('✅ Video can play - ready state:', videoRef.current?.readyState);
+      };
+      
+      videoRef.current.onplay = () => {
+        console.log('✅ Video started playing');
+        setCameraStatus('active');
+      };
+      
+      videoRef.current.onplaying = () => {
+        console.log('✅ Video is actively playing');
+      };
+
+      videoRef.current.onerror = (e) => {
+        console.error('❌ Video element error:', e);
+        console.error('❌ Video error details:', videoRef.current?.error);
+        setCameraStatus('failed');
+      };
+      
+      videoRef.current.onstalled = () => {
+        console.warn('⚠️ Video stalled');
+      };
+      
+      videoRef.current.onwaiting = () => {
+        console.warn('⚠️ Video waiting');
+      };
+      
+      // Force video to be visible for debugging
+      if (videoRef.current.style) {
+        videoRef.current.style.visibility = 'visible';
+        videoRef.current.style.opacity = '1';
+        videoRef.current.style.zIndex = '10';
+        videoRef.current.style.border = '2px solid red'; // Debug border
+        console.log('🎨 Set debug styles on video element');
+      }
+      
+      console.log('▶️ Attempting to play video...');
+      try {
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+          console.log('✅ Video play promise resolved');
+        }
+      } catch (playError) {
+        console.error('❌ Video play failed:', playError);
+        
+        // Try alternative play approaches
+        console.log('🔄 Trying alternative play methods...');
+        
+        // Method 1: Set autoplay and reload
+        videoRef.current.autoplay = true;
+        videoRef.current.muted = true;
+        videoRef.current.playsInline = true;
+        
+        // Method 2: Direct play call
+        setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.play().catch(e => {
+              console.error('❌ Delayed play also failed:', e);
+            });
+          }
+        }, 100);
+      }
+      
       streamRef.current = stream;
-      console.log('✅ Camera initialized successfully');
+      console.log('✅ === CAMERA INITIALIZATION COMPLETED ===');
+      
     } catch (err) {
-      console.error('❌ Camera access failed:', err);
+      console.error('❌ === CAMERA INITIALIZATION FAILED ===');
+      console.error('❌ Error details:', err);
+      console.error('❌ Error stack:', err instanceof Error ? err.stack : 'No stack trace');
       setCameraStatus('failed');
-      setError(`Camera access failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please ensure you granted camera permissions and try refreshing the page.`);
-      // Don't throw error - allow fallback for desktop testing
+      setError(`Camera failed: ${err instanceof Error ? err.message : 'Unknown error'}. Check console for details.`);
     }
   }, []);
 
@@ -1194,6 +1292,10 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
             </span>
           )}
         </div>
+        <div style={styles.infoRow}>
+          <span>Camera: {cameraStatus} | Stream: {streamRef.current ? 'Active' : 'None'}</span>
+          <span>Video: {videoRef.current?.readyState || 'N/A'} | Playing: {videoRef.current?.paused === false ? 'Yes' : 'No'}</span>
+        </div>
         {location && (
           <div style={styles.infoSubtext}>
             Your coordinates: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
@@ -1238,6 +1340,60 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
           </p>
         )}
       </div>
+
+      {/* Debug Camera Controls */}
+      {cameraStatus !== 'active' && (
+        <div style={{
+          position: 'absolute' as const,
+          bottom: '120px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 20,
+          background: 'rgba(255, 255, 255, 0.1)',
+          padding: '15px',
+          borderRadius: '10px',
+          border: '1px solid #fff',
+        }}>
+          <button
+            onClick={initializeCamera}
+            style={{
+              background: '#ff6b6b',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              marginRight: '10px'
+            }}
+          >
+            Retry Camera
+          </button>
+          <button
+            onClick={() => {
+              if (videoRef.current) {
+                console.log('🔍 Manual video test - current state:', {
+                  srcObject: !!videoRef.current.srcObject,
+                  readyState: videoRef.current.readyState,
+                  paused: videoRef.current.paused,
+                  muted: videoRef.current.muted,
+                  autoplay: videoRef.current.autoplay
+                });
+                videoRef.current.play().catch(console.error);
+              }
+            }}
+            style={{
+              background: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '5px',
+              cursor: 'pointer'
+            }}
+          >
+            Test Video Play
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -1257,9 +1413,12 @@ const styles = {
     width: '100%',
     height: '100%',
     objectFit: 'cover' as const,
-    zIndex: 1,
+    zIndex: 10, // Put video on top for debugging
     display: 'block',
     backgroundColor: '#000', // Fallback background
+    border: '3px solid red', // Debug border
+    visibility: 'visible',
+    opacity: 1,
   },
   threeContainer: {
     position: 'absolute' as const,
