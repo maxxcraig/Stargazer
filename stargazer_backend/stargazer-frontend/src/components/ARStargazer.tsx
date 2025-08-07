@@ -33,6 +33,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
   const [cameraRotation, setCameraRotation] = useState({ x: 0, y: 0 });
   const [mouseDownPos, setMouseDownPos] = useState({ x: 0, y: 0 });
   const [hasDragged, setHasDragged] = useState(false);
+  const [cameraStatus, setCameraStatus] = useState<'requesting' | 'active' | 'failed' | 'none'>('none');
 
   // Services
   const sensorManagerRef = useRef<WebSensorManager | null>(null);
@@ -53,23 +54,70 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
    */
   const initializeCamera = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      setCameraStatus('requesting');
+      console.log('🎥 Requesting camera access...');
+      
+      // First try with back camera
+      let constraints = {
         video: { 
-          facingMode: 'environment', // Use back camera on mobile
+          facingMode: { ideal: 'environment' }, // Prefer back camera but allow front
           width: { ideal: 1280 },
           height: { ideal: 720 }
         }
-      });
+      };
       
-      if (videoRef.current) {
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        console.log('✅ Got back camera stream');
+      } catch (backCameraError) {
+        console.log('⚠️ Back camera failed, trying front camera:', backCameraError);
+        // Fallback to front camera or any available camera
+        constraints = {
+          video: {
+            facingMode: 'user', // Front camera fallback
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        };
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        console.log('✅ Got front camera stream');
+      }
+      
+      if (videoRef.current && stream) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        
+        // Add event listeners for video state
+        videoRef.current.onloadedmetadata = () => {
+          console.log('✅ Video metadata loaded');
+          setCameraStatus('active');
+        };
+        
+        videoRef.current.onplay = () => {
+          console.log('✅ Video started playing');
+          setCameraStatus('active');
+        };
+        
+        try {
+          await videoRef.current.play();
+          console.log('✅ Video element playing');
+        } catch (playError) {
+          console.error('❌ Video play failed:', playError);
+          // Try to play without awaiting - browsers sometimes require user interaction
+          videoRef.current.play();
+        }
+      } else {
+        console.error('❌ No video element or stream available');
+        setCameraStatus('failed');
+        return;
       }
       
       streamRef.current = stream;
-      console.log('Camera initialized successfully');
+      console.log('✅ Camera initialized successfully');
     } catch (err) {
-      console.warn('Camera access failed, falling back to desktop mode:', err);
+      console.error('❌ Camera access failed:', err);
+      setCameraStatus('failed');
+      setError(`Camera access failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please ensure you granted camera permissions and try refreshing the page.`);
       // Don't throw error - allow fallback for desktop testing
     }
   }, []);
@@ -1123,6 +1171,23 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         )}
       </div>
 
+      {/* Camera Status */}
+      {cameraStatus !== 'none' && (
+        <div style={{
+          ...styles.instructionsPanel,
+          top: '60px',
+          background: cameraStatus === 'failed' 
+            ? 'linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.3) 100%)'
+            : 'linear-gradient(135deg, rgba(118, 75, 162, 0.2) 0%, rgba(102, 126, 234, 0.2) 100%)'
+        }}>
+          <p style={styles.instructionsText}>
+            {cameraStatus === 'requesting' && '📹 Requesting camera access...'}
+            {cameraStatus === 'active' && '✅ Camera active'}
+            {cameraStatus === 'failed' && '❌ Camera failed - check permissions'}
+          </p>
+        </div>
+      )}
+
       {/* Instructions */}
       <div style={styles.instructionsPanel}>
         <p style={styles.instructionsText}>
@@ -1137,6 +1202,11 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
             : "Look through the Earth to see objects on the other side • Tap for info"
           }
         </p>
+        {cameraStatus === 'failed' && (
+          <p style={{...styles.instructionsSubtext, color: '#ff9999'}}>
+            Camera not working? Try refreshing the page and granting camera permission when prompted.
+          </p>
+        )}
       </div>
     </div>
   );
