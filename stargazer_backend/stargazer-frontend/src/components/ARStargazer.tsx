@@ -513,13 +513,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       width,
       height,
       canvasId: renderer.domElement.id,
-      transparent: renderer.domElement.style.background,
-      clearColor: renderer.getClearColor().getHex(),
-      clearAlpha: renderer.getClearAlpha(),
-      domElementSize: {
-        width: renderer.domElement.width,
-        height: renderer.domElement.height
-      }
+      transparent: renderer.domElement.style.background
     });
 
     // Start render loop
@@ -1425,42 +1419,52 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
 
   // Connect pending stream when video element becomes available
   useEffect(() => {
-    if (videoRef.current && pendingStreamRef.current && !videoRef.current.srcObject) {
-      console.log('🔄 Video element now available, connecting pending stream...');
-      
-      try {
-        videoRef.current.srcObject = pendingStreamRef.current;
+    const connectPendingStream = () => {
+      if (videoRef.current && pendingStreamRef.current && !videoRef.current.srcObject) {
+        console.log('🔄 Video element now available, connecting pending stream...');
         
-        // Set up event listeners for the delayed connection
-        videoRef.current.onloadedmetadata = () => {
-          console.log('✅ Delayed stream metadata loaded');
-          setCameraStatus('active');
-        };
-        
-        videoRef.current.onplay = () => {
-          console.log('✅ Delayed stream started playing');
-          setCameraStatus('active');
-        };
-        
-        videoRef.current.onerror = (e) => {
-          console.error('❌ Delayed stream error:', e);
+        try {
+          videoRef.current.srcObject = pendingStreamRef.current;
+          
+          // Set up event listeners for the delayed connection
+          videoRef.current.onloadedmetadata = () => {
+            console.log('✅ Delayed stream metadata loaded');
+            setCameraStatus('active');
+          };
+          
+          videoRef.current.onplay = () => {
+            console.log('✅ Delayed stream started playing');
+            setCameraStatus('active');
+          };
+          
+          videoRef.current.onerror = (e) => {
+            console.error('❌ Delayed stream error:', e);
+            setCameraStatus('failed');
+          };
+          
+          // Try to play
+          videoRef.current.play().catch(e => {
+            console.error('❌ Delayed stream play failed:', e);
+          });
+          
+          console.log('✅ Pending stream connected successfully');
+          pendingStreamRef.current = null; // Clear pending stream
+          
+        } catch (err) {
+          console.error('❌ Failed to connect pending stream:', err);
           setCameraStatus('failed');
-        };
-        
-        // Try to play
-        videoRef.current.play().catch(e => {
-          console.error('❌ Delayed stream play failed:', e);
-        });
-        
-        console.log('✅ Pending stream connected successfully');
-        pendingStreamRef.current = null; // Clear pending stream
-        
-      } catch (err) {
-        console.error('❌ Failed to connect pending stream:', err);
-        setCameraStatus('failed');
+        }
       }
-    }
-  }); // Run on every render to check for video element availability
+    };
+    
+    // Try to connect immediately
+    connectPendingStream();
+    
+    // Set up interval to keep trying if needed
+    const interval = setInterval(connectPendingStream, 500);
+    
+    return () => clearInterval(interval);
+  }, []);
   
   // Simple camera rotation persistence and orientation sync
   useEffect(() => {
