@@ -56,7 +56,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
   const initializeCamera = useCallback(async () => {
     try {
       setCameraStatus('requesting');
-      console.log('🎥 === CAMERA INITIALIZATION STARTED ===');
+      console.log('CAMERA INITIALIZATION STARTED');
       
       // Check if getUserMedia is available
       
@@ -229,11 +229,11 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       starCatalogRef.current = StarCatalogService.getInstance();
 
       // Force desktop mode for testing - try to get user's location
-      console.log('🚀 STARTING in desktop mode for testing');
+      console.log('STARTING in desktop mode for testing');
       
       // Try to get user's actual location first
       if (navigator.geolocation) {
-        console.log('📍 Attempting to get your actual location...');
+        console.log('Attempting to get your actual location...');
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const userLocation = {
@@ -241,15 +241,15 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
               longitude: position.coords.longitude,
               accuracy: position.coords.accuracy
             };
-            console.log('📍 Got your actual location:', userLocation);
+            console.log('Got your actual location:', userLocation);
             setLocation(userLocation);
             // Don't call updateStarField here - let useEffect handle it after setupThreeJS completes
           },
           (error) => {
-            console.log('📍 Location access denied or failed, using San Diego default:', error.message);
+            console.log('Location access denied or failed, using San Diego default:', error.message);
             const defaultLocation = { latitude: 32.7157, longitude: -117.1611, accuracy: 1000 }; // San Diego, CA
             setLocation(defaultLocation);
-            console.log('📍 Using default location for desktop mode:', defaultLocation);
+            console.log('Using default location for desktop mode:', defaultLocation);
           },
           {
             enableHighAccuracy: true,
@@ -258,10 +258,10 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
           }
         );
       } else {
-        console.log('📍 Geolocation not supported, using San Diego default');
+        console.log(' Geolocation not supported, using San Diego default');
         const defaultLocation = { latitude: 32.7157, longitude: -117.1611, accuracy: 1000 }; // San Diego, CA
         setLocation(defaultLocation);
-        console.log('📍 Using default location for desktop mode:', defaultLocation);
+        console.log('Using default location for desktop mode:', defaultLocation);
       }
       
       // Set initial orientation for desktop mode
@@ -294,31 +294,31 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
    * Set up Three.js scene, camera, and renderer
    */
   const setupThreeJS = useCallback(() => {
-    console.log('🎨 === SETTING UP THREE.JS ===');
-    console.log('🏗️ Mount ref available:', !!mountRef.current);
+    console.log(' === SETTING UP THREE.JS ===');
+    console.log('️ Mount ref available:', !!mountRef.current);
     
     if (!mountRef.current) {
-      console.error('❌ Mount ref not available for Three.js setup');
+      console.error(' Mount ref not available for Three.js setup');
       return;
     }
 
     const width = mountRef.current.clientWidth;
     const height = mountRef.current.clientHeight;
-    console.log('📏 Canvas dimensions:', { width, height });
+    console.log(' Canvas dimensions:', { width, height });
 
     // Scene
     const scene = new THREE.Scene();
     // Don't set background color - let camera video show through
     sceneRef.current = scene;
-    console.log('🎬 Scene created and assigned to ref');
+    console.log(' Scene created and assigned to ref');
 
     // Camera
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
     camera.position.set(0, 0, 0);
     camera.lookAt(0, 0, -1); // Look towards negative Z (where some stars are)
     cameraRef.current = camera;
-    console.log('📷 Camera created and positioned at (0,0,0) looking at (0,0,-1)');
-    console.log('🎯 Camera ref set:', !!cameraRef.current);
+    console.log(' Camera created and positioned at (0,0,0) looking at (0,0,-1)');
+    console.log(' Camera ref set:', !!cameraRef.current);
 
     // Renderer with transparency for AR overlay
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -339,7 +339,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     renderer.domElement.style.left = '0';
     mountRef.current.appendChild(renderer.domElement);
     
-    console.log('🎨 Three.js renderer added to DOM:', {
+    console.log(' Three.js renderer added to DOM:', {
       width,
       height,
       canvasId: renderer.domElement.id,
@@ -349,7 +349,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     // Start render loop
     animate();
     
-    console.log('✅ THREE.JS SETUP COMPLETE - Scene ready for stars!');
+    console.log(' THREE.JS SETUP COMPLETE - Scene ready for stars!');
 
   }, []);
 
@@ -393,17 +393,17 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
    * Update star field based on location and time - SIMPLIFIED VERSION
    */
   const updateStarField = useCallback((currentLocation: GeolocationCoords) => {
-    console.log('🌟 === UPDATE STAR FIELD CALLED ===');
-    console.log('📍 Current location:', currentLocation);
-    console.log('🔍 Checking refs - starCatalog:', !!starCatalogRef.current, 'scene:', !!sceneRef.current);
+    console.log('UPDATE STAR FIELD CALLED');
+    console.log('Current location:', currentLocation);
+    console.log('Checking refs - starCatalog:', !!starCatalogRef.current, 'scene:', !!sceneRef.current);
     
     if (!starCatalogRef.current || !sceneRef.current) {
-      console.error('❌ Missing refs - starCatalog:', !!starCatalogRef.current, 'scene:', !!sceneRef.current);
+      console.error('Missing refs - starCatalog:', !!starCatalogRef.current, 'scene:', !!sceneRef.current);
       return;
     }
 
     try {
-      console.log('🧹 Clearing existing objects...');
+      console.log(' Clearing existing objects...');
       
       // Clear existing stars, planets and constellation lines
       starObjectsRef.current.forEach(star => {
@@ -430,30 +430,30 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       });
       constellationLabelsRef.current.clear();
 
-      console.log('📦 Getting stars from catalog...');
+      console.log(' Getting stars from catalog...');
       
       // Get all stars from catalog - simplified approach
       const allStars = starCatalogRef.current.getAllStars();
-      console.log(`🌟 Got ${allStars.length} stars from catalog`);
-      console.log('🌟 First few stars:', allStars.slice(0, 3).map(s => ({name: s.name, ra: s.ra, dec: s.dec})));
+      console.log(` Got ${allStars.length} stars from catalog`);
+      console.log(' First few stars:', allStars.slice(0, 3).map(s => ({name: s.name, ra: s.ra, dec: s.dec})));
       
       // Create simplified star placement - just put them around us in a sphere
-      console.log('🎨 Creating star objects...');
+      console.log(' Creating star objects...');
       let createdStars = 0;
       allStars.forEach((star, index) => {
         try {
           createSimplifiedStarObject(star, index);
           createdStars++;
         } catch (starErr) {
-          console.error(`❌ Failed to create star ${star.name}:`, starErr);
+          console.error(` Failed to create star ${star.name}:`, starErr);
         }
       });
-      console.log(`✅ Created ${createdStars}/${allStars.length} star objects`);
+      console.log(` Created ${createdStars}/${allStars.length} star objects`);
 
       // Create planets and sun
-      console.log('🪐 Creating planets...');
+      console.log(' Creating planets...');
       const planets = starCatalogRef.current.getPlanets();
-      console.log(`🪐 Got ${planets.length} planets from catalog`);
+      console.log(` Got ${planets.length} planets from catalog`);
       let createdPlanets = 0;
       planets.forEach((planet, index) => {
         // Skip Earth since we're observing from Earth
@@ -462,41 +462,41 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
             createPlanetObject(planet, currentLocation, index);
             createdPlanets++;
           } catch (planetErr) {
-            console.error(`❌ Failed to create planet ${planet.name}:`, planetErr);
+            console.error(` Failed to create planet ${planet.name}:`, planetErr);
           }
         }
       });
-      console.log(`✅ Created ${createdPlanets}/${planets.length - 1} planet objects (excluding Earth)`);
+      console.log(` Created ${createdPlanets}/${planets.length - 1} planet objects (excluding Earth)`);
 
       // Create constellation lines and labels
-      console.log('⭐ Creating constellations...');
+      console.log(' Creating constellations...');
       const constellations = starCatalogRef.current.getConstellations();
-      console.log(`⭐ Got ${constellations.length} constellations from catalog`);
+      console.log(` Got ${constellations.length} constellations from catalog`);
       try {
         createConstellationLines();
         createConstellationLabels();
-        console.log('✅ Created constellation lines and labels');
+        console.log(' Created constellation lines and labels');
       } catch (constErr) {
-        console.error('❌ Failed to create constellations:', constErr);
+        console.error(' Failed to create constellations:', constErr);
       }
 
-      console.log('📊 Setting counts...');
+      console.log(' Setting counts...');
       setStarCount(allStars.length);
       setConstellationCount(constellations.length);
       setPlanetCount(planets.length);
       
-      console.log(`✅ STAR FIELD UPDATE COMPLETE: ${allStars.length} stars, ${planets.length} planets, ${constellations.length} constellations`);
-      console.log('📋 Objects in maps:', {
+      console.log(` STAR FIELD UPDATE COMPLETE: ${allStars.length} stars, ${planets.length} planets, ${constellations.length} constellations`);
+      console.log(' Objects in maps:', {
         stars: starObjectsRef.current.size,
         planets: planetObjectsRef.current.size,
         starLabels: labelObjectsRef.current.size,
         planetLabels: planetLabelObjectsRef.current.size
       });
-      console.log('🎬 Scene children count:', sceneRef.current.children.length);
+      console.log(' Scene children count:', sceneRef.current.children.length);
 
     } catch (err) {
-      console.error('❌ CRITICAL ERROR in updateStarField:', err);
-      console.error('❌ Stack trace:', err instanceof Error ? err.stack : 'No stack trace');
+      console.error(' CRITICAL ERROR in updateStarField:', err);
+      console.error(' Stack trace:', err instanceof Error ? err.stack : 'No stack trace');
     }
   }, []);
 
@@ -505,7 +505,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
    */
   useEffect(() => {
     if (location && isInitialized) {
-      console.log('📍 Location changed, updating star field...');
+      console.log(' Location changed, updating star field...');
       setTimeout(() => {
         updateStarField(location);
       }, 100);
@@ -561,14 +561,14 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     starObjectsRef.current.set(star.id, starMesh);
     
     // Check if star is in front of camera (negative Z)
-    const inView = z < 0 ? '✅ IN VIEW' : '❌ BEHIND CAMERA';
+    const inView = z < 0 ? 'IN VIEW' : 'BEHIND CAMERA';
     const distanceFromOrigin = Math.sqrt(x*x + y*y + z*z);
-    console.log(`⭐ ADDED STAR ${star.name} at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}) - size: ${starSize.toFixed(2)} - distance: ${distanceFromOrigin.toFixed(1)} - ${inView}`);
+    console.log(` ADDED STAR ${star.name} at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}) - size: ${starSize.toFixed(2)} - distance: ${distanceFromOrigin.toFixed(1)} - ${inView}`);
     
     // Add debug info about camera looking direction vs star position
     const starDirection = { x, y, z };
     const cameraDirection = { x: 0, y: 0, z: -1 }; // Camera looks toward -Z
-    console.log(`🎯 ${star.name}: Camera looks at ${JSON.stringify(cameraDirection)}, star at ${JSON.stringify(starDirection)}`);
+    console.log(` ${star.name}: Camera looks at ${JSON.stringify(cameraDirection)}, star at ${JSON.stringify(starDirection)}`);
 
     // Create label for bright stars only (like SkyView Lite)
     if (star.magnitude < 2.0) {
@@ -611,14 +611,14 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
             const lineMesh = new THREE.Line(geometry, material);
             constellationLinesRef.current.add(lineMesh);
 
-            console.log(`✨ Added constellation line: ${line.from} → ${line.to} in ${constellation.name}`);
+            console.log(`Added constellation line: ${line.from} -> ${line.to} in ${constellation.name}`);
           } else {
-            console.log(`⚠️ Could not find stars for line: ${line.from} → ${line.to} in ${constellation.name}`);
+            console.log(`Could not find stars for line: ${line.from} -> ${line.to} in ${constellation.name}`);
           }
         });
       });
 
-      console.log(`✅ Created constellation lines for ${constellations.length} constellations`);
+      console.log(` Created constellation lines for ${constellations.length} constellations`);
 
     } catch (error) {
       console.error('Error creating constellation lines:', error);
@@ -719,10 +719,10 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
           constellationLabelsRef.current.set(constellation.id, sprite);
         }
 
-        console.log(`✨ Added constellation label: ${constellation.name} at center position`);
+        console.log(`Added constellation label: ${constellation.name} at center position`);
       });
 
-      console.log(`✅ Created ${constellationLabelsRef.current.size} constellation labels`);
+      console.log(` Created ${constellationLabelsRef.current.size} constellation labels`);
 
     } catch (error) {
       console.error('Error creating constellation labels:', error);
@@ -789,25 +789,25 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
    */
   const createPlanetObject = useCallback((planet: Planet, location: GeolocationCoords, index: number) => {
     if (!sceneRef.current || !starCatalogRef.current) {
-      console.log(`❌ ${planet.name}: Missing scene or catalog reference`);
+      console.log(` ${planet.name}: Missing scene or catalog reference`);
       return;
     }
 
-    console.log(`🚀 CREATING PLANET: ${planet.name} (${planet.id}) - Type: ${planet.type}, Color: ${planet.color.toString(16)}, Radius: ${planet.radius}`);
+    console.log(` CREATING PLANET: ${planet.name} (${planet.id}) - Type: ${planet.type}, Color: ${planet.color.toString(16)}, Radius: ${planet.radius}`);
 
     try {
       // Calculate current position of the planet
       const currentTime = new Date();
       console.log(`📐 Calculating position for ${planet.name} at ${currentTime.toLocaleString()}...`);
       const planetPosition = starCatalogRef.current.calculatePlanetPosition(planet, currentTime);
-      console.log(`📍 ${planet.name} celestial coordinates: RA ${planetPosition.ra.toFixed(2)}°, Dec ${planetPosition.dec.toFixed(2)}°`);
+      console.log(` ${planet.name} celestial coordinates: RA ${planetPosition.ra.toFixed(2)}°, Dec ${planetPosition.dec.toFixed(2)}°`);
       
       const horizontal = starCatalogRef.current.celestialToHorizontal(planetPosition, location, currentTime);
       console.log(`🧭 ${planet.name} horizontal coordinates: Az ${horizontal.azimuth.toFixed(1)}°, Alt ${horizontal.altitude.toFixed(1)}°`);
 
       // Real astronomical positioning - show ALL planets in full 360° celestial sphere
       // No horizon filtering! Users can drag to see Sun below horizon at night
-      console.log(`🌍 ${planet.name} positioned in full sky sphere (alt: ${horizontal.altitude.toFixed(1)}°) - ${horizontal.altitude < 0 ? 'below horizon (drag down to see)' : 'above horizon'}`);
+      console.log(` ${planet.name} positioned in full sky sphere (alt: ${horizontal.altitude.toFixed(1)}°) - ${horizontal.altitude < 0 ? 'below horizon (drag down to see)' : 'above horizon'}`);
       
       // Always render all planets for full 360° experience
 
@@ -874,20 +874,20 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         sceneRef.current.add(ringMesh);
       }
 
-      console.log(`🎨 Creating 3D mesh for ${planet.name} with geometry radius ${planet.radius} and color 0x${planet.color.toString(16)}`);
+      console.log(` Creating 3D mesh for ${planet.name} with geometry radius ${planet.radius} and color 0x${planet.color.toString(16)}`);
       
       sceneRef.current.add(planetMesh);
       planetObjectsRef.current.set(planet.id, planetMesh);
       
-      console.log(`✅ ${planet.name} mesh added to scene at position (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)})`);
-      console.log(`📋 Planet objects map now contains ${planetObjectsRef.current.size} planets`);
+      console.log(` ${planet.name} mesh added to scene at position (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)})`);
+      console.log(` Planet objects map now contains ${planetObjectsRef.current.size} planets`);
 
       // Special logging for Sun, Jupiter, Mercury
       const isImportantPlanet = planet.id === 'sun' || planet.id === 'jupiter' || planet.id === 'mercury';
       if (isImportantPlanet) {
-        console.log(`🌟 IMPORTANT: ${planet.name.toUpperCase()} RENDERED at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}) - Az: ${horizontal.azimuth.toFixed(1)}° Alt: ${horizontal.altitude.toFixed(1)}° - Look for ${planet.commonName}!`);
+        console.log(` IMPORTANT: ${planet.name.toUpperCase()} RENDERED at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}) - Az: ${horizontal.azimuth.toFixed(1)}° Alt: ${horizontal.altitude.toFixed(1)}° - Look for ${planet.commonName}!`);
       } else {
-        console.log(`🪐 ADDED ${planet.name} at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}) - Az: ${horizontal.azimuth.toFixed(1)}° Alt: ${horizontal.altitude.toFixed(1)}°`);
+        console.log(` ADDED ${planet.name} at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}) - Az: ${horizontal.azimuth.toFixed(1)}° Alt: ${horizontal.altitude.toFixed(1)}°`);
       }
 
       // Create label for planet
@@ -972,7 +972,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
 
     sceneRef.current.add(sprite);
     planetLabelObjectsRef.current.set(planet.id, sprite);
-    console.log(`🪐 Added label for ${planet.name}`);
+    console.log(` Added label for ${planet.name}`);
   }, []);
 
   /**
@@ -999,12 +999,12 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
     if (frameRef.current && frameRef.current % 300 === 0) {
       const stars = starObjectsRef.current.size;
       const planets = planetObjectsRef.current.size;
-      console.log(`🎬 Rendering scene with ${sceneRef.current.children.length} objects (${stars} stars, ${planets} planets)`);
+      console.log(` Rendering scene with ${sceneRef.current.children.length} objects (${stars} stars, ${planets} planets)`);
       
       // Check if any stars are visible in camera frustum
       const cameraPos = cameraRef.current.position;
       const cameraRot = cameraRef.current.rotation;
-      console.log(`📷 Camera: pos(${cameraPos.x.toFixed(1)}, ${cameraPos.y.toFixed(1)}, ${cameraPos.z.toFixed(1)}) rot(${cameraRot.x.toFixed(2)}, ${cameraRot.y.toFixed(2)}, ${cameraRot.z.toFixed(2)})`);
+      console.log(` Camera: pos(${cameraPos.x.toFixed(1)}, ${cameraPos.y.toFixed(1)}, ${cameraPos.z.toFixed(1)}) rot(${cameraRot.x.toFixed(2)}, ${cameraRot.y.toFixed(2)}, ${cameraRot.z.toFixed(2)})`);
     }
 
     rendererRef.current.render(sceneRef.current, cameraRef.current);
@@ -1186,7 +1186,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
   // Setup Three.js when DOM is ready and component is initialized
   useEffect(() => {
     if (isInitialized && mountRef.current && !sceneRef.current) {
-      console.log('🎨 DOM ready, setting up Three.js...');
+      console.log(' DOM ready, setting up Three.js...');
       setupThreeJS();
     }
   }, [isInitialized, setupThreeJS]);
@@ -1264,7 +1264,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
           
           // Try to play
           videoRef.current.play().catch(e => {
-            console.error('❌ Delayed stream play failed:', e);
+            console.error(' Delayed stream play failed:', e);
           });
           
           pendingStreamRef.current = null; // Clear pending stream
@@ -1370,8 +1370,8 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
             : 'linear-gradient(135deg, rgba(118, 75, 162, 0.2) 0%, rgba(102, 126, 234, 0.2) 100%)'
         }}>
           <p style={styles.instructionsText}>
-            {cameraStatus === 'requesting' && '📹 Requesting camera access...'}
-            {cameraStatus === 'failed' && '❌ Camera failed - check permissions'}
+            {cameraStatus === 'requesting' && 'Requesting camera access...'}
+            {cameraStatus === 'failed' && 'Camera failed - check permissions'}
           </p>
         </div>
       )}

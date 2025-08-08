@@ -25,7 +25,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.title}>
-          <span style={styles.titleText}>✨ Max's Skyview ✨</span>
+          <span style={styles.titleText}>Max's Skyview</span>
           <p style={styles.subtitle}>Your personal AR stargazing companion</p>
         </div>
         
@@ -65,9 +65,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             in real-time using your device's camera.
           </p>
           <div style={styles.cardFeatures}>
-            <span style={styles.feature}>• 17 bright stars</span>
+            <span style={styles.feature}>• 49 bright stars</span>
             <span style={styles.feature}>• All 9 planets + sun</span>
-            <span style={styles.feature}>• 4 constellations</span>
+            <span style={styles.feature}>• 9 constellations</span>
             <span style={styles.feature}>• Real-time positioning</span>
           </div>
         </div>

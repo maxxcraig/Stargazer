@@ -199,7 +199,7 @@ function AppContent() {
                 fontFamily: 'Arial, sans-serif',
                 letterSpacing: '1px'
               }}>
-                ✨ Max's Skyview ✨
+                Max's Skyview
               </span>
             </div>
 

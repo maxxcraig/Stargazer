@@ -57,7 +57,7 @@ export const NASADataPage: React.FC<NASADataPageProps> = ({
     const lastFetch = localStorage.getItem('nasaLastFetch');
     const now = Date.now();
     if (lastFetch && (now - parseInt(lastFetch)) < 60000) { // 1 minute cache
-      console.log('🕒 Using cached data to avoid rate limiting');
+      console.log('Using cached data to avoid rate limiting');
       const cachedNEO = localStorage.getItem('nasaCachedNEO');
       const cachedAPOD = localStorage.getItem('nasaCachedAPOD');
       
@@ -74,24 +74,24 @@ export const NASADataPage: React.FC<NASADataPageProps> = ({
     }
 
     try {
-      console.log('🚀 Starting NASA data fetch...');
+      console.log('Starting NASA data fetch...');
       console.log('NASA API Key:', NASA_API_KEY ? `${NASA_API_KEY.substring(0, 10)}...` : 'MISSING');
       
       // Get today's date for Near Earth Objects
       const today = new Date().toISOString().split('T')[0];
-      console.log('📅 Fetching data for date:', today);
+      console.log('Fetching data for date:', today);
       
       const neoUrl = `https://api.nasa.gov/neo/rest/v1/feed?start_date=${today}&end_date=${today}&api_key=${NASA_API_KEY}`;
       const apodUrl = `https://api.nasa.gov/planetary/apod?api_key=${NASA_API_KEY}`;
       
-      console.log('🔗 NEO URL:', neoUrl);
-      console.log('🔗 APOD URL:', apodUrl);
+      console.log('NEO URL:', neoUrl);
+      console.log('APOD URL:', apodUrl);
       
       // Fetch with retry logic and rate limit handling
-      console.log('📡 Starting sequential fetch to avoid rate limits...');
+      console.log('Starting sequential fetch to avoid rate limits...');
       
       // Fetch APOD first (usually more reliable)
-      console.log('📡 Fetching APOD...');
+      console.log('Fetching APOD...');
       const apodResponse = await fetch(apodUrl, {
         method: 'GET',
         headers: {
@@ -100,7 +100,7 @@ export const NASADataPage: React.FC<NASADataPageProps> = ({
       });
 
       if (apodResponse.status === 429) {
-        console.warn('⚠️ Rate limited on APOD, using fallback data');
+        console.warn('Rate limited on APOD, using fallback data');
         // Use fallback APOD data
         setApodData({
           title: "Rate Limit Reached",
@@ -111,20 +111,20 @@ export const NASADataPage: React.FC<NASADataPageProps> = ({
         });
       } else if (!apodResponse.ok) {
         const apodError = await apodResponse.text();
-        console.error('❌ APOD API Error:', apodResponse.status, apodError);
+        console.error('APOD API Error:', apodResponse.status, apodError);
         throw new Error(`APOD API failed: ${apodResponse.status} - ${apodError}`);
       } else {
         const apodData = await apodResponse.json();
         setApodData(apodData);
         localStorage.setItem('nasaCachedAPOD', JSON.stringify(apodData));
-        console.log('✅ APOD data loaded successfully');
+        console.log('APOD data loaded successfully');
       }
 
       // Add delay to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Fetch NEO data
-      console.log('📡 Fetching Near Earth Objects...');
+      console.log('Fetching Near Earth Objects...');
       const neoResponse = await fetch(neoUrl, {
         method: 'GET',
         headers: {
@@ -133,7 +133,7 @@ export const NASADataPage: React.FC<NASADataPageProps> = ({
       });
 
       if (neoResponse.status === 429) {
-        console.warn('⚠️ Rate limited on NEO, using fallback data');
+        console.warn('Rate limited on NEO, using fallback data');
         // Use fallback NEO data
         setNearEarthObjects([
           {
@@ -159,26 +159,26 @@ export const NASADataPage: React.FC<NASADataPageProps> = ({
         ]);
       } else if (!neoResponse.ok) {
         const neoError = await neoResponse.text();
-        console.error('❌ NEO API Error:', neoResponse.status, neoError);
+        console.error('NEO API Error:', neoResponse.status, neoError);
         throw new Error(`NEO API failed: ${neoResponse.status} - ${neoError}`);
       } else {
         const neoData = await neoResponse.json();
         const todaysObjects = neoData.near_earth_objects[today] || [];
-        console.log(`📊 Found ${todaysObjects.length} Near Earth Objects for ${today}`);
+        console.log(`Found ${todaysObjects.length} Near Earth Objects for ${today}`);
         
         const limitedObjects = todaysObjects.slice(0, 10);
         setNearEarthObjects(limitedObjects);
         localStorage.setItem('nasaCachedNEO', JSON.stringify(limitedObjects));
-        console.log('✅ NEO data loaded successfully');
+        console.log('NEO data loaded successfully');
       }
 
       // Store last fetch time
       localStorage.setItem('nasaLastFetch', now.toString());
-      console.log('✅ Successfully updated state with NASA data');
+      console.log('Successfully updated state with NASA data');
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      console.error('❌ Complete NASA API Error Details:', {
+      console.error('Complete NASA API Error Details:', {
         error: err,
         message: errorMessage,
         stack: err instanceof Error ? err.stack : 'No stack trace'
@@ -207,7 +207,7 @@ export const NASADataPage: React.FC<NASADataPageProps> = ({
         </button>
         
         <div style={styles.title}>
-          <span style={styles.titleText}>✨ NASA Space Data ✨</span>
+          <span style={styles.titleText}>NASA Space Data</span>
         </div>
         
         <button onClick={onLogout} style={styles.logoutButton}>
@@ -247,7 +247,7 @@ export const NASADataPage: React.FC<NASADataPageProps> = ({
                         alt={apodData.title}
                         style={styles.apodImage}
                         onError={(e) => {
-                          console.log('❌ APOD image failed to load:', apodData.url);
+                          console.log('APOD image failed to load:', apodData.url);
                           const img = e.target as HTMLImageElement;
                           img.style.display = 'none';
                           const parent = img.parentElement;

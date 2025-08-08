@@ -23,7 +23,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
         </button>
         
         <div style={styles.title}>
-          <span style={styles.titleText}>✨ About Max's Skyview ✨</span>
+          <span style={styles.titleText}>About Max's Skyview</span>
         </div>
         
         <button onClick={onLogout} style={styles.logoutButton}>
@@ -58,7 +58,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
               <div style={styles.featureIcon}></div>
               <h3 style={styles.featureTitle}>Real Stars</h3>
               <p style={styles.featureText}>
-                17 bright stars from the NASA Hipparcos catalog with accurate coordinates,
+                49 bright stars from the NASA Hipparcos catalog with accurate coordinates,
                 magnitudes, and spectral classifications.
               </p>
             </div>
@@ -156,8 +156,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({
               <div style={styles.dataItem}>
                 <h4 style={styles.dataTitle}>Star Data</h4>
                 <p style={styles.dataText}>
-                  17 bright stars from the NASA Hipparcos catalog including Sirius, Vega, 
-                  Betelgeuse, and other magnitude &lt; 2.0 stars with precise RA/Dec coordinates.
+                  49 bright stars from the NASA Hipparcos catalog including Sirius, Vega, 
+                  Betelgeuse, and other bright stars with precise RA/Dec coordinates.
                 </p>
               </div>
               

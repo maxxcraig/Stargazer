@@ -68,7 +68,7 @@ export const AuthScreen: React.FC = () => {
         {/* Title */}
         <div style={styles.titleContainer}>
           <span style={styles.title}>
-            ✨ Max's Skyview ✨
+            Max's Skyview
           </span>
           <p style={styles.subtitle}>
             {isLogin ? 'Welcome back, stargazer!' : 'Join my stargazing community!'}

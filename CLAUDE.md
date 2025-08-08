@@ -6,7 +6,7 @@ A web-based AR stargazing app similar to SkyView Lite that identifies and labels
 ## Current Features (Implemented)
 - ✅ Real-time camera feed background using WebRTC getUserMedia
 - ✅ Three.js 3D star field rendering with transparent AR overlay
-- ✅ 17 bright stars from NASA Hipparcos catalog with accurate coordinates
+- ✅ 49 bright stars from NASA Hipparcos catalog with accurate coordinates
 - ✅ Large, visible star labels with white text and black outlines
 - ✅ Desktop mouse drag controls for unlimited 360° camera movement
 - ✅ Star click detection with raycasting for detailed information modals
@@ -21,7 +21,7 @@ A web-based AR stargazing app similar to SkyView Lite that identifies and labels
 - **3D Graphics**: Three.js WebGL renderer with transparent background for AR overlay
 - **Camera**: WebRTC getUserMedia API for live camera feed background
 - **Mouse Controls**: Custom drag handlers for unlimited 360° camera rotation
-- **Star Catalog**: Embedded 17 bright stars (Sirius, Vega, Betelgeuse, etc.)
+- **Star Catalog**: Embedded 49 bright stars (Sirius, Vega, Betelgeuse, etc.)
 - **Constellation Lines**: Three.js Line objects connecting constellation stars
 - **Raycasting**: Three.js raycaster for star click detection
 
@@ -32,8 +32,8 @@ A web-based AR stargazing app similar to SkyView Lite that identifies and labels
 - **App.tsx**: Main app with star info modal and browser refresh on close
 
 ### Current Data
-- **17 Real Stars**: Sirius, Vega, Betelgeuse, Arcturus, Spica, Antares, etc.
-- **4 Constellations**: Orion (with belt), Summer Triangle, Taurus, Canis Major
+- **49 Real Stars**: Sirius, Vega, Betelgeuse, Arcturus, Spica, Antares, etc.
+- **9 Constellations**: Orion (with belt), Summer Triangle, Taurus, Canis Major, and more
 - **Star Properties**: RA/Dec coordinates, magnitude, spectral class, common names
 
 ## Current Project Structure
@@ -42,7 +42,7 @@ src/
 ├── components/
 │   └── ARStargazer.tsx         # Main AR component with camera, Three.js, stars, constellations
 ├── services/
-│   ├── StarCatalogService.ts   # 17 embedded stars + 4 constellations with line data
+│   ├── StarCatalogService.ts   # 49 embedded stars + 9 constellations with line data
 │   └── WebSensorManager.ts     # Device sensor management (desktop mode)
 ├── App.tsx                     # Main app with modal and browser refresh
 ├── App.css                     # Styles for modals and UI
