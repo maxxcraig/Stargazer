@@ -1,70 +1,100 @@
-# Getting Started with Create React App
+# Stargazer - AR Stargazing Companion
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A web-based AR stargazing app similar to SkyView Lite that identifies and labels stars and constellations in real-time using your device camera. Built with React and Three.js for immersive 3D visualization with desktop mouse controls.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- Real-time camera feed background using WebRTC getUserMedia
+- Three.js 3D star field rendering with transparent AR overlay
+- 49 bright stars from NASA Hipparcos catalog with accurate coordinates
+- Large, visible star labels with white text and black outlines
+- Desktop mouse drag controls for unlimited 360° camera movement
+- Star click detection with raycasting for detailed information modals
+- Constellation lines connecting stars (Orion, Summer Triangle, etc.)
+- SkyView Lite-style user experience
 
-### `npm start`
+## Technical Implementation
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Architecture
+- **Framework**: React with TypeScript
+- **3D Graphics**: Three.js WebGL renderer with transparent background for AR overlay
+- **Camera**: WebRTC getUserMedia API for live camera feed background
+- **Mouse Controls**: Custom drag handlers for unlimited 360° camera rotation
+- **Star Catalog**: Embedded 49 bright stars (Sirius, Vega, Betelgeuse, etc.)
+- **Constellation Lines**: Three.js Line objects connecting constellation stars
+- **Raycasting**: Three.js raycaster for star click detection
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Key Components
+- **ARStargazer.tsx**: Main AR component with camera, Three.js scene, and star rendering
+- **StarCatalogService.ts**: 49 embedded stars + 9 constellations with line data
+- **WebSensorManager.ts**: Device sensor management (currently desktop mode only)
+- **App.tsx**: Main app with star info modal and browser refresh on close
 
-### `npm test`
+### Current Data
+- **49 Real Stars**: Sirius, Vega, Betelgeuse, Arcturus, Spica, Antares, etc.
+- **9 Constellations**: Orion (with belt), Summer Triangle, Taurus, Canis Major, and more
+- **Star Properties**: RA/Dec coordinates, magnitude, spectral class, common names
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Project Structure
+```
+src/
+├── components/
+│   └── ARStargazer.tsx         # Main AR component with camera, Three.js, stars, constellations
+├── services/
+│   ├── StarCatalogService.ts   # 49 embedded stars + 9 constellations with line data
+│   └── WebSensorManager.ts     # Device sensor management (desktop mode)
+├── App.tsx                     # Main app with modal and browser refresh
+├── App.css                     # Styles for modals and UI
+└── index.tsx                   # React app entry point
+```
 
-### `npm run build`
+## How It Works
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Star Rendering
+- **Star Positioning**: Uses golden ratio spiral distribution for realistic sky dome placement
+- **Star Sizes**: Based on magnitude (brighter stars = larger spheres)
+- **Star Labels**: Large canvas-based sprites with white text and black outlines
+- **Visibility**: Only bright stars (magnitude < 2.0) get labels to avoid clutter
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Constellation System
+- **Line Rendering**: Three.js Line objects with 40% opacity white material
+- **Orion Constellation**: Complete belt (Mintaka→Alnilam→Alnitak) + shoulder connections
+- **Summer Triangle**: Vega→Deneb→Altair triangle pattern
+- **Data Structure**: `{from: "star_id", to: "star_id"}` format in StarCatalogService
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Camera Controls
+- **Unlimited Rotation**: Removed mathematical limits for full 360° movement
+- **Mouse Sensitivity**: 0.005 factor for smooth SkyView Lite-style controls
+- **Camera Persistence**: State maintained through React useState and useEffect
 
-### `npm run eject`
+### Modal System
+- **Star Info Display**: Shows magnitude, spectral class, constellation, coordinates
+- **Clean Exit**: Browser refresh on modal close prevents any rendering issues
+- **High Z-Index**: Modal at z-index 9999 to properly overlay Three.js canvas
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Development Setup
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Available Scripts
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+#### `npm start`
+Runs the app in development mode. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+#### `npm run build`
+Builds the app for production to the `build` folder. It correctly bundles React in production mode and optimizes the build for the best performance.
 
-## Learn More
+#### `npm test`
+Launches the test runner in the interactive watch mode.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Framework Details
+- **Start Server**: `npm start` (runs on port 3000)
+- **Framework**: Create React App with TypeScript
+- **No Build Step**: Uses embedded star data, no external API calls
+- **Desktop Testing**: Mouse controls work perfectly for development
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Features in Development
+1. **More Constellations**: Add Big Dipper, Cassiopeia, Southern Cross
+2. **Mobile Support**: Enable device orientation sensors for mobile AR
+3. **Star Magnitude Control**: Toggle visibility by brightness
+4. **Constellation Names**: Add constellation name labels
+5. **Search Feature**: Find specific stars or constellations
+6. **Real Astronomical Coordinates**: Convert to proper celestial coordinate system
