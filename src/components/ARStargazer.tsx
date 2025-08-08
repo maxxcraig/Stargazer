@@ -243,7 +243,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
             };
             console.log('📍 Got your actual location:', userLocation);
             setLocation(userLocation);
-            updateStarField(userLocation);
+            // Don't call updateStarField here - let useEffect handle it after setupThreeJS completes
           },
           (error) => {
             console.log('📍 Location access denied or failed, using San Diego default:', error.message);
@@ -293,15 +293,23 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
    * Set up Three.js scene, camera, and renderer
    */
   const setupThreeJS = useCallback(() => {
-    if (!mountRef.current) return;
+    console.log('🎨 === SETTING UP THREE.JS ===');
+    console.log('🏗️ Mount ref available:', !!mountRef.current);
+    
+    if (!mountRef.current) {
+      console.error('❌ Mount ref not available for Three.js setup');
+      return;
+    }
 
     const width = mountRef.current.clientWidth;
     const height = mountRef.current.clientHeight;
+    console.log('📏 Canvas dimensions:', { width, height });
 
     // Scene
     const scene = new THREE.Scene();
     // Don't set background color - let camera video show through
     sceneRef.current = scene;
+    console.log('🎬 Scene created and assigned to ref');
 
     // Camera
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
@@ -339,6 +347,8 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
 
     // Start render loop
     animate();
+    
+    console.log('✅ THREE.JS SETUP COMPLETE - Scene ready for stars!');
 
   }, []);
 
