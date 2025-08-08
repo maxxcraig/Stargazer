@@ -269,7 +269,8 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       setDeviceOrientation(initialOrientation);
 
       await starCatalogRef.current.initialize();
-      setupThreeJS();
+      
+      // Don't call setupThreeJS here - let useEffect handle it when DOM is ready
 
       // Skip sensor setup in desktop mode
       
@@ -1181,6 +1182,14 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       }
     };
   }, [initializeARStargazer, handleOrientationChange, handleLocationChange]);
+
+  // Setup Three.js when DOM is ready and component is initialized
+  useEffect(() => {
+    if (isInitialized && mountRef.current && !sceneRef.current) {
+      console.log('🎨 DOM ready, setting up Three.js...');
+      setupThreeJS();
+    }
+  }, [isInitialized, setupThreeJS]);
 
   // Set up event listeners - SkyView Lite style drag controls
   useEffect(() => {
