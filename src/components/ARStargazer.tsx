@@ -382,9 +382,18 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
    * Update star field based on location and time - SIMPLIFIED VERSION
    */
   const updateStarField = useCallback((currentLocation: GeolocationCoords) => {
-    if (!starCatalogRef.current || !sceneRef.current) return;
+    console.log('🌟 === UPDATE STAR FIELD CALLED ===');
+    console.log('📍 Current location:', currentLocation);
+    console.log('🔍 Checking refs - starCatalog:', !!starCatalogRef.current, 'scene:', !!sceneRef.current);
+    
+    if (!starCatalogRef.current || !sceneRef.current) {
+      console.error('❌ Missing refs - starCatalog:', !!starCatalogRef.current, 'scene:', !!sceneRef.current);
+      return;
+    }
 
     try {
+      console.log('🧹 Clearing existing objects...');
+      
       // Clear existing stars, planets and constellation lines
       starObjectsRef.current.forEach(star => {
         sceneRef.current?.remove(star);
@@ -410,36 +419,73 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       });
       constellationLabelsRef.current.clear();
 
+      console.log('📦 Getting stars from catalog...');
+      
       // Get all stars from catalog - simplified approach
       const allStars = starCatalogRef.current.getAllStars();
+      console.log(`🌟 Got ${allStars.length} stars from catalog`);
+      console.log('🌟 First few stars:', allStars.slice(0, 3).map(s => ({name: s.name, ra: s.ra, dec: s.dec})));
       
       // Create simplified star placement - just put them around us in a sphere
+      console.log('🎨 Creating star objects...');
+      let createdStars = 0;
       allStars.forEach((star, index) => {
-        createSimplifiedStarObject(star, index);
+        try {
+          createSimplifiedStarObject(star, index);
+          createdStars++;
+        } catch (starErr) {
+          console.error(`❌ Failed to create star ${star.name}:`, starErr);
+        }
       });
+      console.log(`✅ Created ${createdStars}/${allStars.length} star objects`);
 
       // Create planets and sun
+      console.log('🪐 Creating planets...');
       const planets = starCatalogRef.current.getPlanets();
+      console.log(`🪐 Got ${planets.length} planets from catalog`);
+      let createdPlanets = 0;
       planets.forEach((planet, index) => {
         // Skip Earth since we're observing from Earth
         if (planet.id !== 'earth') {
-          createPlanetObject(planet, currentLocation, index);
+          try {
+            createPlanetObject(planet, currentLocation, index);
+            createdPlanets++;
+          } catch (planetErr) {
+            console.error(`❌ Failed to create planet ${planet.name}:`, planetErr);
+          }
         }
       });
+      console.log(`✅ Created ${createdPlanets}/${planets.length - 1} planet objects (excluding Earth)`);
 
       // Create constellation lines and labels
+      console.log('⭐ Creating constellations...');
       const constellations = starCatalogRef.current.getConstellations();
-      createConstellationLines();
-      createConstellationLabels();
+      console.log(`⭐ Got ${constellations.length} constellations from catalog`);
+      try {
+        createConstellationLines();
+        createConstellationLabels();
+        console.log('✅ Created constellation lines and labels');
+      } catch (constErr) {
+        console.error('❌ Failed to create constellations:', constErr);
+      }
 
+      console.log('📊 Setting counts...');
       setStarCount(allStars.length);
       setConstellationCount(constellations.length);
       setPlanetCount(planets.length);
       
-      console.log(`Created ${allStars.length} stars, ${planets.length} planets, and ${constellations.length} constellations in simplified layout`);
+      console.log(`✅ STAR FIELD UPDATE COMPLETE: ${allStars.length} stars, ${planets.length} planets, ${constellations.length} constellations`);
+      console.log('📋 Objects in maps:', {
+        stars: starObjectsRef.current.size,
+        planets: planetObjectsRef.current.size,
+        starLabels: labelObjectsRef.current.size,
+        planetLabels: planetLabelObjectsRef.current.size
+      });
+      console.log('🎬 Scene children count:', sceneRef.current.children.length);
 
     } catch (err) {
-      console.error('Error updating star field:', err);
+      console.error('❌ CRITICAL ERROR in updateStarField:', err);
+      console.error('❌ Stack trace:', err instanceof Error ? err.stack : 'No stack trace');
     }
   }, []);
 
