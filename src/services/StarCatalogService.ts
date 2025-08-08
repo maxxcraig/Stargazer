@@ -1117,6 +1117,16 @@ export class StarCatalogService {
   }
 
   /**
+   * Get all stars
+   */
+  public getAllStars(): Star[] {
+    if (!this.isInitialized) {
+      throw new Error('Star catalog not initialized');
+    }
+    return Array.from(this.stars.values());
+  }
+
+  /**
    * Get all constellations
    */
   public getConstellations(): Constellation[] {

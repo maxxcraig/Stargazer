@@ -411,7 +411,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
       constellationLabelsRef.current.clear();
 
       // Get all stars from catalog - simplified approach
-      const allStars = Array.from(starCatalogRef.current['stars'].values());
+      const allStars = starCatalogRef.current.getAllStars();
       
       // Create simplified star placement - just put them around us in a sphere
       allStars.forEach((star, index) => {
