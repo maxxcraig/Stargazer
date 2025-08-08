@@ -1,80 +1,24 @@
-# Dependencies
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# React Native
-.expo/
-.expo-shared/
-dist/
-web-build/
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
 
-# Native builds
-ios/build/
-android/build/
-android/app/build/
-android/.gradle/
-android/gradle/
+# testing
+/coverage
 
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# production
+/build
 
-# OS generated files
+# misc
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Environment variables
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Logs
-*.log
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-
-# Temporary folders
-tmp/
-temp/
-
-# Claude.md (development context)
-CLAUDE.md
-
-# Star catalog data (if large)
-assets/catalogs/*.json
-assets/catalogs/*.csv
-
-# Build artifacts
-*.ipa
-*.apk
-*.aab
-
-# Metro bundler cache
-.metro-health-check*
-
-# Flipper
-ios/Flipper/
-
-# Pods
-ios/Pods/
-
-DEPLOYMENT_SECURITY.md
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

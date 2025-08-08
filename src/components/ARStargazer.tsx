@@ -1267,7 +1267,7 @@ export const ARStargazer: React.FC<ARStargazerProps> = ({ onError, onStarClick, 
         playsInline
         muted
         controls={false}
-        webkit-playsinline="true"
+        playsInline={true}
       />
       
       {/* Three.js overlay */}
