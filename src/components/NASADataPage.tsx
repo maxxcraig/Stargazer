@@ -246,24 +246,17 @@ export const NASADataPage: React.FC<NASADataPageProps> = ({
                         src={apodData.url} 
                         alt={apodData.title}
                         style={styles.apodImage}
-                        crossOrigin="anonymous"
                         onError={(e) => {
-                          console.log('Image failed to load, trying without crossOrigin');
+                          console.log('❌ APOD image failed to load:', apodData.url);
                           const img = e.target as HTMLImageElement;
-                          if (img.crossOrigin) {
-                            img.crossOrigin = '';
-                            img.src = img.src; // Retry without crossOrigin
-                          } else {
-                            // If still fails, show placeholder
-                            img.style.display = 'none';
-                            const parent = img.parentElement;
-                            if (parent && !parent.querySelector('.image-error')) {
-                              const errorDiv = document.createElement('div');
-                              errorDiv.className = 'image-error';
-                              errorDiv.innerHTML = `<p>Image could not be loaded due to CORS restrictions</p><a href="${apodData.url}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-weight: 600;">View Full Size Image at NASA</a>`;
-                              errorDiv.style.cssText = 'padding: 40px; text-align: center; background: rgba(255, 255, 255, 0.05); border-radius: 12px; color: #b8c5ff;';
-                              parent.appendChild(errorDiv);
-                            }
+                          img.style.display = 'none';
+                          const parent = img.parentElement;
+                          if (parent && !parent.querySelector('.image-error')) {
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'image-error';
+                            errorDiv.innerHTML = `<p style="margin-bottom: 15px;">Image could not be loaded from NASA servers</p><a href="${apodData.url}" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; font-weight: 600; padding: 10px 20px; background: rgba(102, 126, 234, 0.2); border-radius: 8px; border: 1px solid rgba(102, 126, 234, 0.4);">View Image at NASA ↗</a>`;
+                            errorDiv.style.cssText = 'padding: 40px; text-align: center; background: rgba(255, 255, 255, 0.05); border-radius: 12px; color: #b8c5ff;';
+                            parent.appendChild(errorDiv);
                           }
                         }}
                       />
